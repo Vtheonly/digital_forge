@@ -1,0 +1,121 @@
+#!/usr/bin/env node
+/**
+ * forge-fix-chromium — Emergency fix for "snap stub" Chromium on Colab
+ *
+ * Symptoms:
+ *   - "Command '/usr/bin/chromium-browser' requires the chromium snap to be installed"
+ *   - Render fails immediately after "Booting Chromium"
+ *
+ * Cause:
+ *   On Ubuntu 22+, `apt install chromium-browser` installs a snap stub instead
+ *   of the real binary. The stub doesn't work in containers (Colab/Docker).
+ *
+ * Fix:
+ *   1. Remove the snap stub so Playwright stops finding it
+ *   2. Install Playwright's real Chromium binary
+ *   3. Verify the new binary launches
+ *
+ * Usage:
+ *   node bin/forge-fix-chromium
+ */
+
+const path = require('path');
+const fs = require('fs');
+const { Logger } = require('../src/core/Logger');
+const { exec } = require('../src/utils/exec');
+const env = require('../src/utils/environment');
+
+async function main() {
+  const logger = new Logger({ level: 'info', name: 'fix' });
+  const envInfo = env.detect();
+
+  if (!envInfo.isLinux) {
+    logger.info('This fix is only needed on Linux/Colab. You\'re all set.');
+    process.exit(0);
+  }
+
+  logger.info('=== Chromium Snap Stub Fix ===');
+
+  // 1. Check if /usr/bin/chromium-browser is a snap stub
+  const stubPath = '/usr/bin/chromium-browser';
+  if (fs.existsSync(stubPath)) {
+    const isStub = env._isSnapStub(stubPath);
+    logger.info(`Found ${stubPath}`, { isSnapStub: isStub, size: fs.statSync(stubPath).size });
+
+    if (isStub) {
+      logger.warn('Confirmed: snap stub detected. Removing it (requires sudo)...');
+      try {
+        await exec(['sudo', 'apt', 'remove', '-y', 'chromium-browser'], {
+          logger, timeout: 120000, rejectOnNonZero: false
+        });
+        logger.info('Snap stub removed ✓');
+      } catch (e) {
+        logger.warn('Failed to remove via apt, trying direct rm...');
+        try {
+          await exec(['sudo', 'rm', '-f', stubPath], { rejectOnNonZero: false });
+          logger.info('Removed stub file directly');
+        } catch (e2) {
+          logger.error('Could not remove stub. Manual fix needed:');
+          console.log('  sudo apt remove chromium-browser');
+          console.log('  sudo rm /usr/bin/chromium-browser');
+          process.exit(1);
+        }
+      }
+    }
+  } else {
+    logger.info('No /usr/bin/chromium-browser present — good, no stub to remove');
+  }
+
+  // 2. Install Playwright's real Chromium
+  logger.info('Installing Playwright Chromium binary...');
+  try {
+    await exec(['npx', 'playwright', 'install', 'chromium'], {
+      logger, timeout: 600000
+    });
+    await exec(['npx', 'playwright', 'install-deps', 'chromium'], {
+      logger, timeout: 600000, rejectOnNonZero: false
+    });
+  } catch (e) {
+    logger.error('Playwright install failed', { err: e.message });
+    process.exit(1);
+  }
+
+  // 3. Verify
+  const chromiumPath = env.findChromium();
+  if (!chromiumPath) {
+    logger.error('Chromium STILL not found after fix. Manual debug needed:');
+    console.log('  npx playwright install chromium');
+    console.log('  ls -la /root/.cache/ms-playwright/');
+    process.exit(1);
+  }
+
+  logger.info('✓ Chromium fixed!', { path: chromiumPath });
+
+  // 4. Test launch
+  logger.info('Testing Chromium launch...');
+  try {
+    const { chromium } = require('playwright');
+    const browser = await chromium.launch({
+      headless: true,
+      executablePath: chromiumPath,
+      args: env.recommendedChromiumArgs()
+    });
+    const page = await (await browser.newContext()).newPage();
+    await page.setContent('<html><body><h1>test</h1></body></html>');
+    const title = await page.title();
+    await browser.close();
+    logger.info('✓ Chromium launches successfully');
+  } catch (e) {
+    logger.error('Chromium launches but errored', { err: e.message });
+    process.exit(1);
+  }
+
+  logger.info('\n✓ All fixed. You can now run:');
+  logger.info('  node bin/forge-render scenes/digital-forge-reel-en.html --output output/en.mp4 --music audio/forge_theme.wav --gpu --encoder auto');
+  process.exit(0);
+}
+
+main().catch(e => {
+  console.error('FATAL:', e.message);
+  process.exit(1);
+});

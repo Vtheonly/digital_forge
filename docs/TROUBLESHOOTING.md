@@ -11,9 +11,26 @@
 node bin/forge-setup        # auto-installs everything
 # OR
 npx playwright install chromium
-# OR (Colab/Linux)
-sudo apt install -y chromium-browser
+npx playwright install-deps chromium   # installs system libs too
 ```
+
+### "Command '/usr/bin/chromium-browser' requires the chromium snap to be installed"
+
+**Cause:** On Ubuntu 22+ (including Colab), `apt install chromium-browser` installs a **snap stub** instead of the real binary. The stub doesn't work in containers.
+
+**Fix:**
+```bash
+# Use the dedicated fix script
+node bin/forge-fix-chromium
+
+# OR manual fix:
+sudo apt remove -y chromium-browser       # remove the stub
+sudo rm -f /usr/bin/chromium-browser       # ensure it's gone
+npx playwright install chromium            # install real Chromium
+npx playwright install-deps chromium       # install system libs
+```
+
+**Why this happens:** Ubuntu's `chromium-browser` package is a thin wrapper that delegates to `snap install chromium`. Snap doesn't work inside Docker/Colab containers because it needs systemd and a snap daemon. Playwright's bundled Chromium is a real, self-contained binary that Just Works.
 
 ### "ffmpeg not found"
 

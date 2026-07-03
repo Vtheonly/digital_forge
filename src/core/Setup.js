@@ -72,21 +72,28 @@ class Setup {
   async ensureColab() {
     this.log('info', 'Colab detected — installing system packages (this takes ~3-5 min)');
 
-    // Update + install Chromium + fonts + ffmpeg
+    // IMPORTANT: We do NOT install chromium-browser via apt on Colab.
+    // On Ubuntu 22+, /usr/bin/chromium-browser is a snap stub that prints
+    // "requires the chromium snap to be installed" and exits — unusable.
+    // Instead, we install the runtime libs Chromium needs, then let
+    // Playwright download its own real Chromium binary.
     const aptPackages = [
-      'chromium-browser',
+      // Fonts
       'fonts-noto-color-emoji',
       'fonts-noto-core',
-      'fonts-noto-cjk',          // CJK fallback
+      'fonts-noto-cjk',
       'fonts-noto-cjk-extra',
       'fonts-noto-ui-core',
       'fonts-dejavu-core',
       'fonts-liberation',
+      // Chromium runtime libs (installed by playwright install-deps, but
+      // listing here too in case install-deps fails)
       'libnss3', 'libnspr4', 'libatk1.0-0', 'libatk-bridge2.0-0',
       'libcups2', 'libdrm2', 'libxkbcommon0', 'libxcomposite1',
       'libxdamage1', 'libxfixes3', 'libxrandr2', 'libgbm1',
       'libasound2', 'libatspi2.0-0', 'libpangocairo-1.0-0',
       'libpango-1.0-0', 'libcairo2', 'libgdk-pixbuf-2.0-0',
+      // Video encoder
       'ffmpeg'
     ];
 
@@ -178,27 +185,53 @@ class Setup {
   }
 
   /**
-   * Install Playwright's bundled Chromium (used as fallback if system Chrome missing).
+   * Install Playwright's bundled Chromium.
+   *
+   * On Colab, this is the ONLY reliable way to get a working Chromium —
+   * the system /usr/bin/chromium-browser is a snap stub that doesn't work.
+   *
+   * `npx playwright install chromium` downloads the browser binary (~150MB).
+   * `npx playwright install-deps chromium` installs the system libraries
+   * Chromium needs (libnss3, libgbm1, etc.) via apt.
+   *
+   * We ALWAYS run install-deps even if a browser is found, because the
+   * binary may be present but the system libs may be missing.
    */
   async ensurePlaywrightBrowser() {
     this.log('info', 'Checking Playwright browser');
-    const chromiumPath = env.findChromium();
+    let chromiumPath = env.findChromium();
     if (chromiumPath) {
       this.log('debug', 'Playwright Chromium found', { path: chromiumPath });
-      return;
+    } else {
+      this.log('info', 'Installing Playwright Chromium binary (~150MB download)');
+      try {
+        await exec(['npx', 'playwright', 'install', 'chromium'], {
+          logger: this.logger, timeout: 600000
+        });
+      } catch (e) {
+        this.log('error', 'Failed to download Playwright Chromium', { err: e.message });
+        throw new DependencyError('Playwright browser download failed', { cause: e });
+      }
+      // Verify it actually installed
+      chromiumPath = env.findChromium();
+      if (!chromiumPath) {
+        throw new DependencyError('Playwright Chromium install appeared to succeed but binary not found');
+      }
+      this.log('info', 'Playwright Chromium installed', { path: chromiumPath });
     }
-    this.log('info', 'Installing Playwright Chromium binary (~150MB download)');
+
+    // Always install system deps (idempotent — skips what's already there)
+    this.log('info', 'Ensuring Playwright system deps (libnss3, libgbm1, etc.)');
     try {
-      await exec(['npx', 'playwright', 'install', 'chromium'], {
+      await exec(['npx', 'playwright', 'install-deps', 'chromium'], {
         logger: this.logger, timeout: 600000
       });
-      await exec(['npx', 'playwright', 'install-deps', 'chromium'], {
-        timeout: 600000
-      });
-      this.log('info', 'Playwright Chromium installed ✓');
+      this.log('info', 'Playwright system deps installed ✓');
     } catch (e) {
-      this.log('error', 'Failed to install Playwright browser', { err: e.message });
-      throw new DependencyError('Playwright browser install failed', { cause: e });
+      this.log('warn', 'playwright install-deps failed (may already be installed)', {
+        err: e.message.slice(0, 200)
+      });
+      // Not fatal — continue, the renderer will fail with a clearer error if libs are missing
     }
   }
 

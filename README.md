@@ -19,7 +19,8 @@ digital-forge-reel/
 ├── bin/                          # CLI entry points
 │   ├── forge-render              # main render command
 │   ├── forge-setup               # install all deps (Colab-aware)
-│   └── forge-music               # generate background music
+│   ├── forge-music               # generate background music
+│   └── forge-fix-chromium        # one-shot fix for Colab snap-stub issue
 ├── scenes/                       # self-contained HTML scenes
 │   ├── digital-forge-reel-en.html   # English version (Digital Forge reel)
 │   └── digital-forge-reel-ar.html   # Algerian Darija version (RTL Arabic)
@@ -87,6 +88,12 @@ node bin/forge-render scenes/digital-forge-reel-en.html \
 node bin/forge-render scenes/digital-forge-reel-ar.html \
     --output output/ar.mp4 \
     --music audio/forge_theme.wav
+```
+
+## Hit "chromium snap" error on Colab?
+
+```bash
+node bin/forge-fix-chromium   # one-shot fix for the snap stub issue
 ```
 
 ## Quick start (Google Colab — recommended for free GPU)

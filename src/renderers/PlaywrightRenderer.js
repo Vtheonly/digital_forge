@@ -92,25 +92,51 @@ class PlaywrightRenderer extends Renderer {
       executablePath = env.findChromium();
     }
 
+    // Auto-install Playwright Chromium if missing (helps on Colab where
+    // the user may have skipped `node bin/forge-setup`)
+    if (!executablePath) {
+      this.logger.warn('No Chromium found — auto-installing Playwright Chromium (~150MB download)');
+      const { exec } = require('../utils/exec');
+      try {
+        await exec(['npx', 'playwright', 'install', 'chromium'], {
+          logger: this.logger, timeout: 600000
+        });
+        await exec(['npx', 'playwright', 'install-deps', 'chromium'], {
+          logger: this.logger, timeout: 600000
+        });
+        executablePath = env.findChromium();
+      } catch (installErr) {
+        throw new RenderError(
+          'Chromium not found and auto-install failed. Run `node bin/forge-setup` manually.',
+          { cause: installErr }
+        );
+      }
+      if (!executablePath) {
+        throw new RenderError(
+          'Chromium install appeared to succeed but binary still not found. ' +
+          'Try: npx playwright install chromium'
+        );
+      }
+      this.logger.info('Chromium auto-installed', { path: executablePath });
+    }
+
     const launchOpts = {
       args,
       headless: true,
       viewport: { width: captureW, height: captureH },
-      deviceScaleFactor: dsf
+      deviceScaleFactor: dsf,
+      executablePath
     };
-    if (executablePath) {
-      launchOpts.executablePath = executablePath;
-      this.logger.debug('Using Chromium binary', { path: executablePath });
-    }
+    this.logger.debug('Using Chromium binary', { path: executablePath });
 
     try {
       this.browser = await chromium.launch(launchOpts);
     } catch (e) {
-      // Common Colab issue: Playwright browser not installed
-      if (e.message.includes('Executable doesn\'t exist') ||
-          e.message.includes('browserType.launch')) {
+      // Check if it's the snap stub issue
+      if (e.message && e.message.includes('snap')) {
         throw new RenderError(
-          'Chromium not found. Run `node bin/setup` first to install it.',
+          'System chromium-browser is a snap stub (broken on Colab). ' +
+          'Run `node bin/forge-setup` to install Playwright\'s real Chromium.',
           { cause: e }
         );
       }
