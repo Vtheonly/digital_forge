@@ -1,0 +1,185 @@
+#!/usr/bin/env node
+/**
+ * forge-render — Main CLI entry point for rendering a video
+ *
+ * Usage:
+ *   node bin/forge-render <scene.html> [options]
+ *
+ * Options:
+ *   --output, -o <path>        Output MP4 path (default: ./output/video.mp4)
+ *   --fps <n>                  Capture fps (default: 15)
+ *   --target-fps <n>           Output fps (default: 60)
+ *   --scale <0.1-4>            Capture scale (default: 1.0 = native res)
+ *   --width <n>                Final video width (default: 1080)
+ *   --height <n>               Final video height (default: 1920)
+ *   --encoder <cpu|nvenc|vaapi|qsv|videotoolbox|auto>
+ *                              Encoder to use (default: auto)
+ *   --gpu                      Enable GPU rasterization in Chrome (use this on GPU runtimes)
+ *   --music <path>             Background music WAV/MP3 (skipped if not provided)
+ *   --generate-music           Auto-generate music if --music not given
+ *   --crf <0-51>               Quality (default: 18, lower = better)
+ *   --preset <name>            Encoder preset (default: medium)
+ *   --interpolate <dup|mi>     Frame interpolation: 'dup' (fast) or 'mi' (minterpolate, slow but smooth)
+ *   --start <n>                Start frame (for resumable rendering)
+ *   --max-frames <n>           Max frames to capture this run
+ *   --no-resume                Re-capture frames even if they exist on disk
+ *   --keep-frames              Don't delete frames after encoding
+ *   --log-level <level>        debug|info|warn|error
+ *   --log-file <path>          Write logs to file
+ *   --setup                    Run setup before rendering (auto-installs deps on Colab)
+ *
+ * Examples:
+ *   # Basic render with CPU encoder
+ *   node bin/forge-render scenes/digital-forge-reel-en.html -o output/en.mp4
+ *
+ *   # GPU-accelerated capture + NVENC encode (Colab GPU runtime)
+ *   node bin/forge-render scenes/digital-forge-reel-en.html --gpu --encoder nvenc -o output/en.mp4
+ *
+ *   # Half-res capture (fast, lower quality)
+ *   node bin/forge-render scenes/digital-forge-reel-en.html --scale 0.5 -o output/en.mp4
+ *
+ *   # Auto-generate music + render
+ *   node bin/forge-render scenes/digital-forge-reel-en.html --generate-music -o output/en.mp4
+ */
+
+const path = require('path');
+const fs = require('fs');
+const { Logger } = require('../src/core/Logger');
+const { Config } = require('../src/config/Config');
+const { Pipeline } = require('../src/core/Pipeline');
+const { Setup } = require('../src/core/Setup');
+const { MusicGenerator } = require('../src/audio/MusicGenerator');
+const { ConfigError, AppError } = require('../src/utils/errors');
+
+function parseArgs(argv) {
+  const opts = {
+    encoder: 'auto',
+    fps: 15,
+    targetFps: 60,
+    scale: 1.0,
+    width: 1080,
+    height: 1920,
+    crf: 18,
+    preset: 'medium',
+    interpolate: 'duplicate',
+    startFrame: 0,
+    maxFrames: Infinity,
+    resumeFromDisk: true,
+    cleanFramesAfterEncode: true,
+    useGpu: false,
+    generateMusic: false,
+    logLevel: 'info',
+    setup: false
+  };
+  const positional = [];
+
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i];
+    const next = () => {
+      if (i + 1 >= argv.length) throw new ConfigError(`Option ${a} requires a value`);
+      return argv[++i];
+    };
+
+    switch (a) {
+      case '-o': case '--output': opts.outputPath = next(); break;
+      case '--fps': opts.fps = parseInt(next(), 10); break;
+      case '--target-fps': opts.targetFps = parseInt(next(), 10); break;
+      case '--scale': opts.captureScale = parseFloat(next()); break;
+      case '--width': opts.width = parseInt(next(), 10); break;
+      case '--height': opts.height = parseInt(next(), 10); break;
+      case '--encoder': opts.encoder = next(); break;
+      case '--gpu': opts.useGpu = true; break;
+      case '--music': opts.musicPath = next(); break;
+      case '--generate-music': opts.generateMusic = true; break;
+      case '--crf': opts.crf = parseInt(next(), 10); break;
+      case '--preset': opts.preset = next(); break;
+      case '--interpolate':
+        opts.interpolate = next() === 'mi' ? 'minterpolate' : 'duplicate';
+        break;
+      case '--start': opts.startFrame = parseInt(next(), 10); break;
+      case '--max-frames': opts.maxFrames = parseInt(next(), 10); break;
+      case '--no-resume': opts.resumeFromDisk = false; break;
+      case '--keep-frames': opts.cleanFramesAfterEncode = false; break;
+      case '--log-level': opts.logLevel = next(); break;
+      case '--log-file': opts.logFile = next(); break;
+      case '--setup': opts.setup = true; break;
+      case '-h': case '--help':
+        printHelp(); process.exit(0);
+      default:
+        if (a.startsWith('--')) {
+          throw new ConfigError(`Unknown option: ${a}`);
+        }
+        positional.push(a);
+    }
+  }
+
+  if (positional.length === 0) {
+    printHelp();
+    throw new ConfigError('Scene HTML path is required');
+  }
+  opts.htmlPath = path.resolve(positional[0]);
+  return opts;
+}
+
+function printHelp() {
+  console.log(require('fs').readFileSync(__filename, 'utf8')
+    .split('\n').filter(l => l.startsWith(' *')).map(l => l.slice(3)).join('\n'));
+}
+
+async function main() {
+  let opts;
+  try {
+    opts = parseArgs(process.argv.slice(2));
+  } catch (e) {
+    console.error('Error: ' + e.message);
+    process.exit(2);
+  }
+
+  const logger = new Logger({
+    level: opts.logLevel,
+    file: opts.logFile,
+    name: 'forge'
+  });
+
+  try {
+    // Optional setup phase
+    if (opts.setup) {
+      const setup = new Setup({ logger, projectRoot: path.resolve(__dirname, '..') });
+      await setup.run();
+    }
+
+    // Generate music if requested
+    if (opts.generateMusic && !opts.musicPath) {
+      const musicPath = path.join(path.dirname(opts.outputPath || './output/video.mp4'), 'forge_theme.wav');
+      const gen = new MusicGenerator(logger);
+      const result = await gen.generate({ outputPath: musicPath });
+      opts.musicPath = result.path;
+    }
+
+    // Resolve output path
+    if (!opts.outputPath) {
+      opts.outputPath = path.join(opts.outputDir || './output', 'video.mp4');
+    }
+    opts.outputDir = path.dirname(opts.outputPath);
+
+    // Build config
+    const config = new Config(opts);
+    logger.info('Config loaded', config.summary());
+
+    // Run pipeline
+    const pipeline = new Pipeline(config, logger);
+    const stats = await pipeline.run();
+
+    logger.info('All done!', stats);
+    process.exit(0);
+  } catch (e) {
+    if (e instanceof AppError) {
+      logger.error('Pipeline failed', { code: e.code, msg: e.message, context: e.context });
+    } else {
+      logger.fatal('Unexpected error', { msg: e.message, stack: e.stack });
+    }
+    process.exit(1);
+  }
+}
+
+main();

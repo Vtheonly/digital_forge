@@ -1,0 +1,47 @@
+#!/usr/bin/env node
+/**
+ * forge-setup — Install all dependencies (system + Node + Python + Playwright)
+ *
+ * On Colab: installs Chromium, fonts, ffmpeg via apt-get
+ * On local: prints what's missing and how to install
+ *
+ * Usage:
+ *   node bin/forge-setup
+ *   node bin/forge-setup --verbose
+ *   FORGE_USE_GPU=1 node bin/forge-setup   # also installs CUDA if NVIDIA detected
+ */
+
+const path = require('path');
+const { Logger } = require('../src/core/Logger');
+const { Setup } = require('../src/core/Setup');
+
+async function main() {
+  const verbose = process.argv.includes('--verbose') || process.argv.includes('-v');
+  const logger = new Logger({
+    level: verbose ? 'debug' : 'info',
+    name: 'setup'
+  });
+
+  const setup = new Setup({
+    logger,
+    projectRoot: path.resolve(__dirname, '..')
+  });
+
+  try {
+    const result = await setup.run();
+    console.log('\n✓ Setup complete. You can now run:');
+    console.log('  node bin/forge-render scenes/digital-forge-reel-en.html -o output/en.mp4');
+    if (result.env.isColab) {
+      console.log('\nColab tips:');
+      console.log('  - Use GPU runtime (Runtime → Change runtime type → T4 GPU) for NVENC encoding');
+      console.log('  - Use --gpu flag to enable GPU rasterization in Chrome');
+      console.log('  - Save output to /content/drive/MyDrive/ to persist after session ends');
+    }
+    process.exit(0);
+  } catch (e) {
+    logger.fatal('Setup failed', { msg: e.message, code: e.code });
+    process.exit(1);
+  }
+}
+
+main();

@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+.npm/
+
+# Output (don't commit rendered videos)
+output/
+output/frames/
+*.mp4
+*.webm
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Keep these even though they're in output/
+!audio/forge_theme.wav
+!scenes/*.html

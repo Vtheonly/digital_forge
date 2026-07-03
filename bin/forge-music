@@ -1,0 +1,51 @@
+#!/usr/bin/env node
+/**
+ * forge-music — Generate background music
+ *
+ * Usage:
+ *   node bin/forge-music [options]
+ *
+ * Options:
+ *   --out <path>      Output WAV path (default: ./audio/forge_theme.wav)
+ *   --bpm <n>         Tempo (default: 128)
+ *   --bars <n>        Total bars (default: 17 ≈ 32 seconds)
+ *   --sr <n>          Sample rate (default: 44100)
+ */
+
+const path = require('path');
+const { Logger } = require('../src/core/Logger');
+const { MusicGenerator } = require('../src/audio/MusicGenerator');
+
+async function main() {
+  const opts = {};
+  for (let i = 2; i < process.argv.length; i++) {
+    const a = process.argv[i];
+    const next = () => process.argv[++i];
+    switch (a) {
+      case '--out': opts.outputPath = path.resolve(next()); break;
+      case '--bpm': opts.bpm = parseInt(next(), 10); break;
+      case '--bars': opts.bars = parseInt(next(), 10); break;
+      case '--sr': opts.sr = parseInt(next(), 10); break;
+      case '-h': case '--help':
+        console.log(require('fs').readFileSync(__filename, 'utf8')
+          .split('\n').filter(l => l.startsWith(' *')).map(l => l.slice(3)).join('\n'));
+        process.exit(0);
+    }
+  }
+  if (!opts.outputPath) {
+    opts.outputPath = path.resolve(__dirname, '..', 'audio', 'forge_theme.wav');
+  }
+
+  const logger = new Logger({ level: 'info', name: 'music' });
+  const gen = new MusicGenerator(logger);
+
+  try {
+    await gen.generate(opts);
+    process.exit(0);
+  } catch (e) {
+    logger.fatal('Music generation failed', { msg: e.message, code: e.code });
+    process.exit(1);
+  }
+}
+
+main();

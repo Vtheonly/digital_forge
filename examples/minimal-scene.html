@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Minimal Scene — Learn the Contract</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 1080px; height: 1920px;
+    background: linear-gradient(135deg, #0a0a14 0%, #1a0d04 100%);
+    color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    overflow: hidden;
+  }
+  #stage {
+    width: 1080px; height: 1920px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    position: relative;
+  }
+  .eyebrow {
+    font-family: 'SF Mono', Menlo, monospace;
+    font-size: 28px; letter-spacing: 8px;
+    text-transform: uppercase;
+    color: #ffb800;
+    margin-bottom: 40px;
+    opacity: 0;
+  }
+  h1 {
+    font-size: 140px; font-weight: 900;
+    text-align: center; line-height: 1;
+    letter-spacing: -4px;
+  }
+  h1 .word {
+    display: inline-block;
+    opacity: 0;
+  }
+  h1 .accent {
+    background: linear-gradient(135deg, #ff6b1a, #ffb800);
+    -webkit-background-clip: text; background-clip: text;
+    color: transparent;
+  }
+  .sub {
+    margin-top: 50px;
+    font-size: 36px; color: rgba(255,255,255,0.7);
+    opacity: 0;
+  }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="eyebrow">// minimal scene</div>
+  <h1>
+    <span class="word">HELLO</span>
+    <span class="word accent">WORLD</span>
+  </h1>
+  <div class="sub">Edit me and re-render</div>
+</div>
+
+<script>
+/* ============================================================
+   MINIMAL SCENE — shows the renderer contract
+   ============================================================
+   A scene must expose:
+     window.masterTL      — GSAP timeline with .seek(t) and .duration()
+     window.renderAtTime  — function(t) that seeks + redraws
+   ============================================================ */
+
+// Build the animation timeline
+const masterTL = gsap.timeline({ paused: true });
+
+// Eyebrow fades in
+masterTL.to('.eyebrow', { opacity: 1, duration: 0.4, ease: 'power2.out' }, 0.2);
+
+// Words punch in one by one
+masterTL.to('.word', {
+  opacity: 1, y: 0,
+  duration: 0.5, stagger: 0.15, ease: 'back.out(1.4)'
+}, 0.5);
+
+// Subtitle fades in
+masterTL.to('.sub', { opacity: 1, duration: 0.5, ease: 'power2.out' }, 1.2);
+
+// Hold for 1s
+masterTL.to({}, { duration: 1 });
+
+// Total duration: ~2.7s
+
+// === RENDERER CONTRACT ===
+window.masterTL = masterTL;
+window.renderMode = (location.hash !== '#live');
+
+window.renderAtTime = function(t) {
+  // For this simple scene, just seeking the timeline is enough.
+  // (For scenes with canvas/WebGL, you'd also redraw those here.)
+  masterTL.seek(t);
+};
+
+// Play in live preview mode (open scene.html#live in browser)
+if (!window.renderMode) masterTL.play();
+</script>
+</body>
+</html>

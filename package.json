@@ -1,0 +1,37 @@
+{
+  "name": "digital-forge-reel",
+  "version": "1.0.0",
+  "description": "Render HTML/CSS/JS scenes into vertical social-media videos (Reels/TikTok/Shorts). GPU-accelerated capture + encoding, modular pipeline, Colab-ready.",
+  "main": "src/core/Pipeline.js",
+  "bin": {
+    "forge-render": "bin/forge-render",
+    "forge-setup": "bin/forge-setup",
+    "forge-music": "bin/forge-music"
+  },
+  "scripts": {
+    "render": "node bin/forge-render",
+    "setup": "node bin/forge-setup",
+    "music": "node bin/forge-music",
+    "test": "node tests/test-pipeline.js"
+  },
+  "engines": {
+    "node": ">=16"
+  },
+  "dependencies": {
+    "playwright": "^1.40.0"
+  },
+  "devDependencies": {},
+  "keywords": [
+    "video",
+    "rendering",
+    "instagram-reels",
+    "tiktok",
+    "shorts",
+    "motion-graphics",
+    "gsap",
+    "ffmpeg",
+    "nvenc",
+    "gpu"
+  ],
+  "license": "MIT"
+}
