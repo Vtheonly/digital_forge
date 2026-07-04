@@ -2827,3 +2827,49 @@ Every scene should feel like part of the same visual language, with consistent c
 
 The viewer should immediately feel that Digital Forge creates world-class software products, including websites, mobile applications, desktop applications, AI solutions, automation systems, and custom software built specifically for businesses.
 
+
+
+Please make the following changes to the video:
+
+1. **Remove the Digital Forge branding entirely.**
+
+   * Do not use the Digital Forge logo or icon.
+   * Remove the hexagonal/diamond logo mark from every scene.
+   * The final video should contain no branding or watermark related to Digital Forge.
+
+2. **Convert the video to Instagram Reel format.**
+
+   * Resolution: **1080 × 1920 pixels**
+   * Aspect ratio: **9:16 (vertical/portrait)**
+   * The video should be optimized for full-screen viewing on mobile devices.
+
+3. **Remove all recording and screen capture artifacts.**
+   The final video should look like a professionally produced motion graphic or promotional video—not a screen recording.
+
+   Remove all of the following:
+
+   * Playback controls or video player UI
+   * Recording overlays (REC indicator, timecode, scene counters, etc.)
+   * Timestamps
+   * Mouse cursor
+   * Borders or device frames
+   * Debug HUDs
+   * Screenshot mode elements
+   * Any recording or capture artifacts
+   * Any UI that suggests the video was recorded from a screen
+
+4. **Make the video feel native and polished.**
+
+   * Every scene should appear as if it was created directly for the video.
+   * Use smooth animations and transitions.
+   * Ensure the camera movement is stable with no shaking or screen-capture effects.
+   * The final result should resemble a high-quality commercial or social media advertisement rather than a desktop recording.
+
+Plan for the edits:
+
+* Remove all Digital Forge branding, including the logo.
+* Reformat the video to **1080 × 1920 (9:16)** for Instagram Reels.
+* Remove every recording, debugging, and video player overlay.
+* Clean up any remaining screen-recording artifacts.
+* Render a polished, professional final video suitable for publishing on Instagram Reels.
+
