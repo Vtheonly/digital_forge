@@ -79,17 +79,17 @@ class PlaywrightRenderer extends Renderer {
           { cause: installErr },
         );
       }
-      if (!executablePath) {
-        throw new RenderError(
-          "Chromium install appeared to succeed but binary still not found. Try: npx playwright install chromium",
-        );
-      }
       this.logger.info("Chromium auto-installed", { path: executablePath });
     }
 
-    // Pre-emptively spin up Xvfb to bypass standard headless software fallbacks
-    let xvfbDisplay = null;
-    if (c.get("useGpu") && c.get("verifyGpu") && envInfo.isLinux) {
+    // Pre-emptively start Xvfb on Linux to bypass the slow double boot cycle
+    let xvfbDisplay = process.env.DISPLAY || null;
+    if (
+      c.get("useGpu") &&
+      c.get("verifyGpu") &&
+      envInfo.isLinux &&
+      !xvfbDisplay
+    ) {
       const { XvfbFallback } = require("../utils/XvfbFallback");
       const xvfb = new XvfbFallback({ logger: this.logger });
       xvfbDisplay = await xvfb.start();
@@ -103,7 +103,6 @@ class PlaywrightRenderer extends Renderer {
     }
 
     const launchOpts = {
-      // If Xvfb is running, strip headless flag so Chrome runs headed and inherits hardware acceleration
       args: xvfbDisplay
         ? args.filter((a) => !a.startsWith("--headless"))
         : args,
@@ -153,7 +152,7 @@ class PlaywrightRenderer extends Renderer {
       try {
         this.gpuStatus = await verifyGpu(this.page, this.logger);
 
-        // Classic fallback chain (only used if pre-emptive display wasn't active)
+        // Classic fallback loop (only triggered if Xvfb wasn't pre-emptively running)
         if (!this.gpuStatus.gpuActive && !xvfbDisplay) {
           this.logger.warn(
             "GPU was requested but Chrome is using CPU rasterization (SwiftShader). Will try Xvfb (headed) fallback...",
