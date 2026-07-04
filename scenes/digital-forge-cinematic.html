@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Forge — Cinematic Showcase</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            background: #030307;
+            overflow: hidden;
+            font-family: 'Inter', system-ui, sans-serif;
+            color: #fff;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ============================================================
+     Viewport Wrapper & Cinematic Camera System
+     ============================================================ */
+        #viewport {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            perspective: 1200px;
+            background: radial-gradient(circle at 50% 30%, #0c0a1a 0%, #030307 80%);
+        }
+
+        #stageWrap {
+            position: relative;
+            width: 1080px;
+            height: 1920px;
+            transform-origin: center center;
+            overflow: hidden;
+            background: #040409;
+            box-shadow: 0 0 100px rgba(0, 0, 0, 0.8);
+        }
+
+        #camera,
+        #drift,
+        #shake,
+        #stage {
+            width: 1080px;
+            height: 1920px;
+            position: relative;
+            transform-origin: center center;
+            transform-style: preserve-3d;
+            will-change: transform;
+        }
+
+        .glow-sphere {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(140px);
+            pointer-events: none;
+            opacity: 0.35;
+            mix-blend-mode: screen;
+            will-change: transform;
+        }
+
+        #glow-orange {
+            width: 800px;
+            height: 800px;
+            background: #ff6b1a;
+            top: 10%;
+            left: -20%;
+        }
+
+        #glow-blue {
+            width: 900px;
+            height: 900px;
+            background: #3b82f6;
+            bottom: 5%;
+            right: -20%;
+        }
+
+        #bg-grid {
+            position: absolute;
+            inset: -20%;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+            background-size: 80px 80px;
+            transform: rotateX(60deg) translateZ(-200px);
+            mask-image: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.8) 20%, transparent 70%);
+            opacity: 0.5;
+        }
+
+        #main-canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        /* Cinematic film finish, always on top */
+        #vignette {
+            position: absolute;
+            inset: 0;
+            z-index: 110;
+            pointer-events: none;
+            background: radial-gradient(ellipse at center, transparent 42%, rgba(0, 0, 0, 0.6) 100%);
+        }
+
+        #grain {
+            position: absolute;
+            inset: 0;
+            z-index: 111;
+            pointer-events: none;
+            opacity: 0.05;
+            mix-blend-mode: overlay;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+        }
+
+        /* ============================================================
+     Common UI & Typography
+     ============================================================ */
+        .scene {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            z-index: 10;
+            padding: 100px 80px;
+            transform-style: preserve-3d;
+            will-change: opacity;
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(24px);
+        }
+
+        .eyebrow {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 28px;
+            font-weight: 500;
+            letter-spacing: 6px;
+            color: #ff6b1a;
+            text-transform: uppercase;
+            margin-bottom: 24px;
+        }
+
+        .scene-caption {
+            position: absolute;
+            bottom: 180px;
+            text-align: center;
+        }
+
+        .caption-h {
+            font-size: 72px;
+            font-weight: 900;
+        }
+
+        .title-hero {
+            font-size: 88px;
+            font-weight: 900;
+            line-height: 1.02;
+            text-align: center;
+            letter-spacing: -2px;
+            background: linear-gradient(180deg, #fff 0%, #a5b4fc 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            transform: translateZ(80px);
+        }
+
+        .glass-card {
+            background: rgba(13, 12, 28, 0.45);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(25px);
+            border-radius: 24px;
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        /* ============================================================
+     Scene 1: Hook Intro
+     ============================================================ */
+        #scene-hook .headline-wrap {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        #scene-hook .word {
+            display: inline-block;
+            opacity: 0;
+            transform: translateY(60px) rotateX(-45deg);
+        }
+
+        #scene-hook .word.accent {
+            background: linear-gradient(135deg, #ff6b1a, #ffb800);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        /* ============================================================
+     Scene 2: Mobile Premium Apps
+     ============================================================ */
+        .phone-container {
+            position: relative;
+            width: 480px;
+            height: 900px;
+            transform-style: preserve-3d;
+            transform: rotateY(-20deg) rotateX(12deg);
+        }
+
+        .phone-shell {
+            width: 100%;
+            height: 100%;
+            background: #09090f;
+            border-radius: 64px;
+            border: 8px solid #272635;
+            box-shadow: 0 50px 120px rgba(0, 0, 0, 0.8), 0 0 100px rgba(94, 158, 255, 0.15);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .phone-screen {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, #0b0a17 0%, #030308 100%);
+            padding: 60px 40px;
+            display: flex;
+            flex-direction: column;
+            opacity: 0;
+            transform: translateY(40px);
+        }
+
+        .phone-gloss {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%, transparent 100%);
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .phone-card {
+            height: 150px;
+            margin-bottom: 20px;
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            opacity: 0;
+            transform: translateZ(50px) translateY(30px);
+        }
+
+        .phone-card .icon-box {
+            width: 70px;
+            height: 70px;
+            border-radius: 18px;
+            background: linear-gradient(135deg, #ff6b1a, #ffb800);
+        }
+
+        .phone-card .bar-line {
+            height: 12px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+
+        .phone-notification {
+            position: absolute;
+            top: 120px;
+            left: 50%;
+            transform: translateX(-50%) translateZ(80px) scale(0.8);
+            width: 400px;
+            padding: 24px;
+            opacity: 0;
+            z-index: 15;
+        }
+
+        /* ============================================================
+     Scene 3: Websites
+     ============================================================ */
+        .browser-container {
+            width: 900px;
+            height: 600px;
+            transform-style: preserve-3d;
+            transform: rotateY(15deg) rotateX(10deg);
+        }
+
+        .browser-window {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .browser-bar {
+            height: 60px;
+            background: rgba(255, 255, 255, 0.03);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            gap: 12px;
+        }
+
+        .browser-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .browser-dot.active {
+            background: #3b82f6;
+        }
+
+        .browser-viewport {
+            height: calc(100% - 60px);
+            padding: 40px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .hero-box {
+            max-width: 600px;
+        }
+
+        .hero-h {
+            height: 48px;
+            background: #fff;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            width: 80%;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .hero-p {
+            height: 16px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            margin-bottom: 10px;
+            width: 100%;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .grid-card-row {
+            display: flex;
+            gap: 20px;
+            margin-top: 40px;
+        }
+
+        .grid-card-row .c {
+            flex: 1;
+            height: 160px;
+            padding: 22px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            opacity: 0;
+            transform: translateY(40px) rotateY(-15deg);
+        }
+
+        .mini-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #3b82f6, #60a5fa);
+        }
+
+        .mini-bar {
+            height: 10px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .fake-cursor {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 0 24px rgba(255, 255, 255, 0.7);
+            z-index: 20;
+            opacity: 0;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+        }
+
+        /* ============================================================
+     Scene 4: Desktop Dashboards
+     ============================================================ */
+        .desktop-container {
+            width: 920px;
+            height: 640px;
+            transform-style: preserve-3d;
+            transform: rotateY(-10deg) rotateX(8deg);
+        }
+
+        .desktop-panel {
+            width: 100%;
+            height: 100%;
+            padding: 40px;
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            gap: 30px;
+        }
+
+        .desktop-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .desktop-sidebar .item {
+            height: 50px;
+            opacity: 0;
+            transform: translateX(-30px);
+        }
+
+        .desktop-sidebar .item.active {
+            background: linear-gradient(90deg, rgba(255, 107, 26, 0.15), transparent);
+            border-left: 3px solid #ff6b1a;
+        }
+
+        .chart-canvas {
+            position: relative;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 24px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            height: 100%;
+            opacity: 0;
+            transform: translateZ(40px) scale(0.95);
+        }
+
+        .chart-bar {
+            width: 10%;
+            background: linear-gradient(180deg, #ff6b1a, #ffb800);
+            border-radius: 8px 8px 0 0;
+            transform-origin: bottom;
+            transform: scaleY(0);
+        }
+
+        /* ============================================================
+     Scene 5: AI & Automation
+     ============================================================ */
+        #scene-ai {
+            background: radial-gradient(circle at center, rgba(13, 12, 28, 0.4) 0%, #030307 70%);
+        }
+
+        .node-panel-container {
+            display: flex;
+            gap: 24px;
+            width: 960px;
+            z-index: 10;
+        }
+
+        .node-panel {
+            flex: 1;
+            padding: 26px 20px;
+            text-align: center;
+            opacity: 0;
+            transform: perspective(800px) rotateY(-45deg) translateZ(-50px);
+        }
+
+        .node-panel-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 15px;
+            color: #ff6b1a;
+            margin-bottom: 10px;
+        }
+
+        .node-panel-h {
+            font-size: 26px;
+            font-weight: 700;
+        }
+
+        .mini-node-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 18px;
+        }
+
+        .mini-node {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ff6b1a;
+            box-shadow: 0 0 12px #ff6b1a;
+            opacity: 0;
+        }
+
+        .mini-line {
+            width: 28px;
+            height: 2px;
+            background: rgba(255, 107, 26, 0.3);
+        }
+
+        /* ============================================================
+     Scene 6: Brand Climax CTA
+     ============================================================ */
+        #scene-cta .anvil-glowing-wrapper {
+            width: 200px;
+            height: 200px;
+            margin-bottom: 40px;
+            opacity: 0;
+            transform: scale(0.4) rotateZ(-30deg);
+        }
+
+        #scene-cta .anvil-idle {
+            width: 100%;
+            height: 100%;
+        }
+
+        #scene-cta .headline-climax {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 128px;
+            font-weight: 900;
+            letter-spacing: -4px;
+            line-height: 0.95;
+            text-align: center;
+            background: linear-gradient(180deg, #fff, #93c5fd);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            opacity: 0;
+        }
+
+        #scene-cta .sub-tagline {
+            font-size: 36px;
+            color: rgba(255, 255, 255, 0.65);
+            margin-top: 30px;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        #scene-cta .cta-pill {
+            margin-top: 60px;
+            padding: 24px 60px;
+            background: linear-gradient(135deg, #ff6b1a, #ffb800);
+            color: #030307;
+            border-radius: 100px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: 38px;
+            box-shadow: 0 30px 80px rgba(255, 107, 26, 0.4);
+            opacity: 0;
+            transform: scale(0.8) translateY(30px);
+        }
+
+        #whip-transition {
+            position: absolute;
+            inset: 0;
+            z-index: 100;
+            pointer-events: none;
+            background: linear-gradient(90deg, transparent, rgba(255, 184, 0, 0.5), transparent);
+            opacity: 0;
+            transform: scaleX(0);
+            transform-origin: left center;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="viewport">
+        <div id="stageWrap">
+            <div id="camera">
+                <div id="drift">
+                    <div id="shake">
+                        <div id="stage">
+
+                            <div id="glow-orange" class="glow-sphere"></div>
+                            <div id="glow-blue" class="glow-sphere"></div>
+                            <div id="bg-grid"></div>
+                            <canvas id="main-canvas"></canvas>
+
+                            <!-- Scene 1: Hook -->
+                            <div class="scene" id="scene-hook">
+                                <div class="eyebrow reveal">// the future of engineering</div>
+                                <div class="headline-wrap">
+                                    <h1 class="title-hero">
+                                        <span class="word">WE</span>
+                                        <span class="word">FORGE</span><br>
+                                        <span class="word">WORLD-CLASS</span><br>
+                                        <span class="word accent">SOFTWARE</span>
+                                    </h1>
+                                </div>
+                            </div>
+
+                            <!-- Scene 2: Mobile Apps -->
+                            <div class="scene" id="scene-mobile">
+                                <div class="phone-container">
+                                    <div class="glass-card phone-notification" id="p-notif">
+                                        <div style="font-weight:700; color:#ff6b1a; font-size:24px; margin-bottom:4px;">
+                                            PROPOSAL ACCEPTED</div>
+                                        <div style="color:rgba(255,255,255,0.7); font-size:20px;">Client deposited
+                                            $2,500.00</div>
+                                    </div>
+                                    <div class="phone-shell">
+                                        <div class="phone-gloss"></div>
+                                        <div class="phone-screen">
+                                            <div
+                                                style="display:flex; justify-content:space-between; margin-bottom:40px;">
+                                                <div
+                                                    style="width:30px; height:30px; border-radius:50%; background:rgba(255,255,255,0.1)">
+                                                </div>
+                                                <div
+                                                    style="width:80px; height:12px; background:rgba(255,255,255,0.1); border-radius:6px; margin-top:9px;">
+                                                </div>
+                                            </div>
+                                            <div class="glass-card phone-card">
+                                                <div class="icon-box"></div>
+                                                <div style="flex:1;">
+                                                    <div class="bar-line" style="width:80%;"></div>
+                                                    <div class="bar-line" style="width:50%; margin-bottom:0;"></div>
+                                                </div>
+                                            </div>
+                                            <div class="glass-card phone-card">
+                                                <div class="icon-box"
+                                                    style="background:linear-gradient(135deg, #3b82f6, #60a5fa)"></div>
+                                                <div style="flex:1;">
+                                                    <div class="bar-line" style="width:70%;"></div>
+                                                    <div class="bar-line" style="width:40%; margin-bottom:0;"></div>
+                                                </div>
+                                            </div>
+                                            <div class="glass-card phone-card">
+                                                <div class="icon-box"></div>
+                                                <div style="flex:1;">
+                                                    <div class="bar-line" style="width:90%;"></div>
+                                                    <div class="bar-line" style="width:60%; margin-bottom:0;"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="scene-caption">
+                                    <div class="eyebrow reveal">// native experience</div>
+                                    <h2 class="caption-h reveal">MOBILE APPS</h2>
+                                </div>
+                            </div>
+
+                            <!-- Scene 3: Websites -->
+                            <div class="scene" id="scene-web">
+                                <div class="browser-container">
+                                    <div class="glass-card browser-window">
+                                        <div class="browser-bar">
+                                            <div class="browser-dot active"></div>
+                                            <div class="browser-dot"></div>
+                                            <div class="browser-dot"></div>
+                                        </div>
+                                        <div class="browser-viewport">
+                                            <div class="hero-box">
+                                                <div class="hero-h" id="h-h1"></div>
+                                                <div class="hero-p"></div>
+                                                <div class="hero-p" style="width:60%;"></div>
+                                            </div>
+                                            <div class="grid-card-row">
+                                                <div class="glass-card c">
+                                                    <div class="mini-icon"></div>
+                                                    <div class="mini-bar" style="width:80%"></div>
+                                                    <div class="mini-bar" style="width:50%"></div>
+                                                </div>
+                                                <div class="glass-card c" style="border-color: rgba(255,107,26,0.3)">
+                                                    <div class="mini-icon"
+                                                        style="background:linear-gradient(135deg,#ff6b1a,#ffb800)">
+                                                    </div>
+                                                    <div class="mini-bar" style="width:70%"></div>
+                                                    <div class="mini-bar" style="width:40%"></div>
+                                                </div>
+                                                <div class="glass-card c">
+                                                    <div class="mini-icon"></div>
+                                                    <div class="mini-bar" style="width:90%"></div>
+                                                    <div class="mini-bar" style="width:60%"></div>
+                                                </div>
+                                            </div>
+                                            <div class="fake-cursor" id="cursor1"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="scene-caption">
+                                    <div class="eyebrow reveal">// convert visitors</div>
+                                    <h2 class="caption-h reveal">WEBSITES</h2>
+                                </div>
+                            </div>
+
+                            <!-- Scene 4: Desktop Apps -->
+                            <div class="scene" id="scene-desktop">
+                                <div class="desktop-container">
+                                    <div class="glass-card desktop-panel">
+                                        <div class="desktop-sidebar">
+                                            <div class="glass-card item active"></div>
+                                            <div class="glass-card item"></div>
+                                            <div class="glass-card item"></div>
+                                            <div class="glass-card item"></div>
+                                        </div>
+                                        <div class="chart-canvas" id="chart-c">
+                                            <div class="chart-bar" style="height:40%"></div>
+                                            <div class="chart-bar" style="height:60%"></div>
+                                            <div class="chart-bar" style="height:55%"></div>
+                                            <div class="chart-bar" style="height:85%"></div>
+                                            <div class="chart-bar" style="height:70%"></div>
+                                            <div class="chart-bar" style="height:95%"></div>
+                                            <div class="chart-bar" style="height:80%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="scene-caption">
+                                    <div class="eyebrow reveal">// powerful workflows</div>
+                                    <h2 class="caption-h reveal">DESKTOP APPS</h2>
+                                </div>
+                            </div>
+
+                            <!-- Scene 5: AI & Automation -->
+                            <div class="scene" id="scene-ai">
+                                <div class="node-panel-container">
+                                    <div class="glass-card node-panel" id="np1">
+                                        <div class="mini-node-row"><span class="mini-node"></span><span
+                                                class="mini-line"></span><span class="mini-node"></span></div>
+                                        <div class="node-panel-tag">PIPELINE 01</div>
+                                        <div class="node-panel-h">INTELLIGENT API</div>
+                                    </div>
+                                    <div class="glass-card node-panel" id="np2"
+                                        style="border-color:rgba(255,107,26,0.3)">
+                                        <div class="mini-node-row"><span class="mini-node"></span><span
+                                                class="mini-line"></span><span class="mini-node"></span><span
+                                                class="mini-line"></span><span class="mini-node"></span></div>
+                                        <div class="node-panel-tag">PIPELINE 02</div>
+                                        <div class="node-panel-h">DATA MORPHING</div>
+                                    </div>
+                                    <div class="glass-card node-panel" id="np3">
+                                        <div class="mini-node-row"><span class="mini-node"></span><span
+                                                class="mini-line"></span><span class="mini-node"></span></div>
+                                        <div class="node-panel-tag">PIPELINE 03</div>
+                                        <div class="node-panel-h">WORKFLOW SYNC</div>
+                                    </div>
+                                </div>
+                                <div class="scene-caption">
+                                    <div class="eyebrow reveal">// neural execution</div>
+                                    <h2 class="caption-h reveal">AI &amp; AUTOMATION</h2>
+                                </div>
+                            </div>
+
+                            <!-- Scene 6: Brand Climax CTA -->
+                            <div class="scene" id="scene-cta">
+                                <div class="anvil-glowing-wrapper">
+                                    <div class="anvil-idle">
+                                        <svg viewBox="0 0 200 200" width="200" height="200">
+                                            <defs>
+                                                <linearGradient id="anvilGradCin" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="0%" stop-color="#ffb800" />
+                                                    <stop offset="50%" stop-color="#ff6b1a" />
+                                                    <stop offset="100%" stop-color="#7a1f2b" />
+                                                </linearGradient>
+                                            </defs>
+                                            <path
+                                                d="M30 100 L170 100 L170 115 L150 115 L150 150 L50 150 L50 115 L30 115 Z"
+                                                fill="url(#anvilGradCin)" stroke="#fff" stroke-width="1.5" />
+                                            <path d="M40 80 L160 80 L170 100 L30 100 Z" fill="url(#anvilGradCin)"
+                                                stroke="#fff" stroke-width="1.5" />
+                                        </svg>
+                                    </div>
+                                </div>
+                                <h1 class="headline-climax">DIGITAL<br>FORGE</h1>
+                                <p class="sub-tagline">Websites. Apps. AI. Automation.</p>
+                                <div class="cta-pill">DM TO BUILD</div>
+                            </div>
+
+                            <div id="whip-transition"></div>
+                            <div id="vignette"></div>
+                            <div id="grain"></div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* ============================================================
+           DIGITAL FORGE — Cinematic Commercial v2
+           ============================================================ */
+
+        gsap.config({ nullTargetWarn: false });
+
+        /* Default = live, autoplaying preview.
+           Append #capture to defer all frame advancement to an external
+           renderer calling window.renderAtTime(t) (deterministic, no rAF). */
+        window.CAPTURE_MODE = /capture/i.test(location.hash);
+
+        function resizeStage() {
+            const wrap = document.getElementById('stageWrap');
+            const scale = Math.min(window.innerWidth / 1120, window.innerHeight / 1960);
+            wrap.style.transform = `scale(${scale})`;
+        }
+        window.addEventListener('resize', resizeStage);
+        resizeStage();
+
+        const camEl = document.getElementById('camera');
+        const driftEl = document.getElementById('drift');
+        const shakeEl = document.getElementById('shake');
+        const glowOrange = document.getElementById('glow-orange');
+        const glowBlue = document.getElementById('glow-blue');
+        const anvilEl = document.querySelector('#scene-cta .anvil-idle');
+        const ctaPillEl = document.querySelector('#scene-cta .cta-pill');
+
+        /* Single source of truth for scene timing */
+        const T = {
+            hookStart: 0.00, hookEnd: 4.50,
+            mobStart: 4.95, mobEnd: 9.00,
+            webStart: 9.45, webEnd: 13.50,
+            dskStart: 13.95, dskEnd: 18.00,
+            aiStart: 18.45, aiEnd: 24.00,
+            ctaStart: 24.45
+        };
+        const IDLE_GATE = T.ctaStart + 2.3;
+
+        /* ============================================================
+           Neural Network Canvas
+           ============================================================ */
+        const canvas = document.getElementById('main-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 1080; canvas.height = 1920;
+
+        const nodes = [];
+        const connections = [];
+        const netIntensity = { val: 0.05 };
+
+        function seedNeuralNetwork() {
+            const layers = [3, 5, 5, 2];
+            const xCoords = [220, 460, 700, 900];
+            layers.forEach((cnt, li) => {
+                const startY = 900 - ((cnt - 1) * 150) / 2;
+                for (let i = 0; i < cnt; i++) {
+                    nodes.push({
+                        x: xCoords[li], y: startY + i * 150,
+                        r: 12 + Math.random() * 8,
+                        pulseOffset: Math.random() * Math.PI * 2
+                    });
+                }
+            });
+            nodes.forEach(a => {
+                nodes.forEach(b => {
+                    if (b.x > a.x && b.x - a.x < 300 && Math.random() > 0.4) {
+                        connections.push({ from: a, to: b });
+                    }
+                });
+            });
+        }
+        seedNeuralNetwork();
+
+        function drawNeuralNetwork(t) {
+            ctx.clearRect(0, 0, 1080, 1920);
+            const I = netIntensity.val;
+            if (I <= 0.001) return;
+            ctx.lineCap = 'round';
+
+            connections.forEach(c => {
+                const activeVal = Math.sin(t * 8 + c.from.pulseOffset) * 0.5 + 0.5;
+                ctx.lineWidth = activeVal > 0.8 ? 3.5 : 1.5;
+                ctx.strokeStyle = activeVal > 0.8
+                    ? `rgba(255, 107, 26, ${(0.15 + activeVal * 0.3) * I})`
+                    : `rgba(255,255,255,${0.03 * I})`;
+                ctx.beginPath();
+                ctx.moveTo(c.from.x, c.from.y);
+                ctx.lineTo(c.to.x, c.to.y);
+                ctx.stroke();
+
+                if (activeVal > 0.9) {
+                    const px = c.from.x + (c.to.x - c.from.x) * ((t * 2) % 1);
+                    const py = c.from.y + (c.to.y - c.from.y) * ((t * 2) % 1);
+                    ctx.fillStyle = `rgba(255,184,0,${I})`;
+                    ctx.shadowBlur = 12 * I;
+                    ctx.shadowColor = '#ff6b1a';
+                    ctx.beginPath();
+                    ctx.arc(px, py, 6, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            });
+
+            nodes.forEach(n => {
+                const pulse = Math.sin(t * 5 + n.pulseOffset) * 4;
+                const hot = pulse > 2;
+                ctx.fillStyle = hot ? `rgba(255,107,26,${I})` : `rgba(255,255,255,${0.04 * I})`;
+                ctx.strokeStyle = hot ? `rgba(255,255,255,${I})` : `rgba(255,255,255,${0.1 * I})`;
+                ctx.lineWidth = 2;
+                ctx.shadowBlur = hot ? 25 * I : 0;
+                ctx.shadowColor = '#ff6b1a';
+                ctx.beginPath();
+                ctx.arc(n.x, n.y, n.r + (pulse > 0 ? pulse * 0.4 : 0), 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+            });
+
+            ctx.shadowBlur = 0;
+        }
+
+        /* ============================================================
+           Ambient / camera update — one deterministic function used by
+           BOTH live playback and frame-accurate capture.
+           ============================================================ */
+        function updateAmbient(t) {
+            const shakeT = t * 18;
+            const sx = (Math.sin(shakeT * 2.8) + Math.cos(shakeT * 5.4)) * 2;
+            const sy = (Math.cos(shakeT * 3.1) + Math.sin(shakeT * 4.9)) * 2;
+            shakeEl.style.transform = `translate3d(${sx}px, ${sy}px, 0)`;
+
+            const driftT = t * 0.4;
+            const dx = Math.sin(driftT * 0.8) * 14;
+            const dy = Math.cos(driftT * 1.2) * 10;
+            const dr = Math.sin(driftT * 0.5) * 0.3;
+            driftEl.style.transform = `translate3d(${dx}px, ${dy}px, 0) rotate(${dr}deg)`;
+
+            glowOrange.style.transform = `translate3d(${Math.sin(t * 0.3) * 40}px, ${Math.cos(t * 0.25) * 30}px, 0) scale(${1 + Math.sin(t * 0.2) * 0.08})`;
+            glowBlue.style.transform = `translate3d(${Math.cos(t * 0.28) * -50}px, ${Math.sin(t * 0.22) * 35}px, 0) scale(${1 + Math.cos(t * 0.18) * 0.08})`;
+
+            if (t > IDLE_GATE && anvilEl && ctaPillEl) {
+                const lt = t - IDLE_GATE;
+                anvilEl.style.transform = `rotateZ(${Math.sin(lt * 1.3) * 6}deg)`;
+                ctaPillEl.style.transform = `scale(${1 + Math.sin(lt * 2.4) * 0.035})`;
+            }
+
+            drawNeuralNetwork(t);
+        }
+
+        /* Camera whip-cut transition between two scenes */
+        function whipTransition(tl, time, from, to) {
+            const d = 0.45;
+            tl.to(camEl, { scale: 1.25, rotation: 3, filter: 'blur(15px)', duration: d * 0.5, ease: 'power2.in' }, time);
+            tl.to('#whip-transition', { opacity: 0.8, scaleX: 1, duration: d * 0.3, ease: 'power1.in' }, time);
+            tl.set(from, { opacity: 0 }, time + d * 0.5);
+            tl.set(to, { opacity: 1 }, time + d * 0.5);
+            tl.to('#whip-transition', { opacity: 0, scaleX: 0, duration: d * 0.3, ease: 'power1.out' }, time + d * 0.5);
+            tl.to(camEl, { scale: 1.0, rotation: 0, filter: 'blur(0px)', duration: d * 0.5, ease: 'power2.out' }, time + d * 0.5);
+        }
+
+        /* ============================================================
+           MASTER GSAP PIPELINE
+           ============================================================ */
+        function buildMasterTimeline() {
+            const tl = gsap.timeline();
+
+            // Scene 1: Hook
+            tl.set('#scene-hook', { opacity: 1 }, T.hookStart);
+            tl.to('#scene-hook .eyebrow', { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' }, 0.2);
+            tl.to('#scene-hook .word', {
+                opacity: 1, y: 0, rotationX: 0, duration: 0.8, stagger: 0.1, ease: 'back.out(1.2)'
+            }, 0.5);
+            tl.to(camEl, { scale: 1.12, duration: T.hookEnd, ease: 'sine.inOut' }, T.hookStart);
+
+            whipTransition(tl, T.hookEnd, '#scene-hook', '#scene-mobile');
+
+            // Scene 2: Mobile Apps
+            tl.set('#scene-mobile .phone-container', { transform: 'rotateY(-40deg) rotateX(15deg) translateZ(-50px)' }, T.mobStart);
+            tl.to('#scene-mobile .phone-container', { transform: 'rotateY(10deg) rotateX(5deg) translateZ(0px)', duration: T.mobEnd - T.mobStart, ease: 'power2.out' }, T.mobStart);
+            tl.to('#scene-mobile .scene-caption .reveal', { opacity: 1, y: 0, duration: 0.6, stagger: 0.15, ease: 'power2.out' }, T.mobStart + 0.1);
+            tl.to('#scene-mobile .phone-screen', { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' }, T.mobStart + 0.3);
+            tl.to('#scene-mobile .phone-card', { opacity: 1, y: 0, duration: 0.6, stagger: 0.15, ease: 'back.out(1.4)' }, T.mobStart + 0.6);
+            tl.to('#p-notif', { opacity: 1, scale: 1, duration: 0.5, ease: 'back.out(1.5)' }, T.mobStart + 1.8);
+            tl.to(netIntensity, { val: 0.08, duration: 0.6 }, T.mobStart);
+
+            whipTransition(tl, T.mobEnd, '#scene-mobile', '#scene-web');
+
+            // Scene 3: Websites
+            tl.set('#scene-web .browser-container', { transform: 'rotateY(30deg) rotateX(-5deg)' }, T.webStart);
+            tl.to('#scene-web .browser-container', { transform: 'rotateY(-10deg) rotateX(8deg)', duration: T.webEnd - T.webStart, ease: 'power2.out' }, T.webStart);
+            tl.to('#scene-web .scene-caption .reveal', { opacity: 1, y: 0, duration: 0.6, stagger: 0.15, ease: 'power2.out' }, T.webStart + 0.1);
+            tl.to('#h-h1', { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' }, T.webStart + 0.3);
+            tl.to('#scene-web .hero-p', { opacity: 1, y: 0, duration: 0.5, stagger: 0.1 }, T.webStart + 0.5);
+            tl.to('#scene-web .c', { opacity: 1, y: 0, rotationY: 0, duration: 0.6, stagger: 0.12, ease: 'back.out(1.2)' }, T.webStart + 0.9);
+            tl.set('#cursor1', { opacity: 0, x: 700, y: 90 }, T.webStart);
+            tl.to('#cursor1', { opacity: 1, duration: 0.3 }, T.webStart + 1.6);
+            tl.to('#cursor1', { x: 460, y: 430, duration: 0.8, ease: 'power2.inOut' }, T.webStart + 1.8);
+            tl.to('#cursor1', { scale: 0.7, duration: 0.15, yoyo: true, repeat: 1 }, T.webStart + 2.6);
+            tl.to('#cursor1', { opacity: 0, duration: 0.3 }, T.webStart + 3.2);
+
+            whipTransition(tl, T.webEnd, '#scene-web', '#scene-desktop');
+
+            // Scene 4: Desktop Apps
+            tl.set('#scene-desktop .desktop-container', { transform: 'rotateY(-25deg) rotateX(-8deg)' }, T.dskStart);
+            tl.to('#scene-desktop .desktop-container', { transform: 'rotateY(12deg) rotateX(10deg)', duration: T.dskEnd - T.dskStart, ease: 'power2.out' }, T.dskStart);
+            tl.to('#scene-desktop .scene-caption .reveal', { opacity: 1, y: 0, duration: 0.6, stagger: 0.15, ease: 'power2.out' }, T.dskStart + 0.1);
+            tl.to('#scene-desktop .item', { opacity: 1, x: 0, duration: 0.4, stagger: 0.08, ease: 'power2.out' }, T.dskStart + 0.3);
+            tl.to('#chart-c', { opacity: 1, scale: 1, duration: 0.6, ease: 'back.out(1.1)' }, T.dskStart + 0.6);
+            tl.to('#scene-desktop .chart-bar', { scaleY: 1, duration: 0.8, stagger: 0.08, ease: 'back.out(1.3)' }, T.dskStart + 1.0);
+
+            whipTransition(tl, T.dskEnd, '#scene-desktop', '#scene-ai');
+
+            // Scene 5: AI & Automation
+            tl.to(netIntensity, { val: 1, duration: 0.8, ease: 'power2.out' }, T.aiStart - 0.2);
+            tl.to('#scene-ai .scene-caption .reveal', { opacity: 1, y: 0, duration: 0.6, stagger: 0.15, ease: 'power2.out' }, T.aiStart + 0.1);
+            tl.to('#scene-ai .node-panel', { opacity: 1, transform: 'perspective(800px) rotateY(0deg) translateZ(0px)', duration: 0.8, stagger: 0.2, ease: 'back.out(1.2)' }, T.aiStart + 0.4);
+            tl.to('#scene-ai .mini-node', { opacity: 1, duration: 0.4, stagger: 0.06 }, T.aiStart + 0.7);
+            tl.to(netIntensity, { val: 0.05, duration: 0.6, ease: 'power2.in' }, T.aiEnd - 0.3);
+
+            whipTransition(tl, T.aiEnd, '#scene-ai', '#scene-cta');
+
+            // Scene 6: Climax CTA
+            tl.to('#scene-cta .anvil-glowing-wrapper', { opacity: 1, scale: 1, rotationZ: 0, duration: 0.8, ease: 'back.out(1.5)' }, T.ctaStart + 0.3);
+            tl.to('#scene-cta .headline-climax', { opacity: 1, duration: 0.6 }, T.ctaStart + 0.8);
+            tl.to('#scene-cta .sub-tagline', { opacity: 1, y: 0, duration: 0.5 }, T.ctaStart + 1.2);
+            tl.to('#scene-cta .cta-pill', { opacity: 1, scale: 1, y: 0, duration: 0.6, ease: 'back.out(1.6)' }, T.ctaStart + 1.6);
+            tl.to(camEl, { scale: 1.08, duration: 6.5, ease: 'sine.inOut' }, T.ctaStart);
+
+            return tl;
+        }
+
+        const masterTL = buildMasterTimeline();
+        window.masterTL = masterTL;
+        window.SCENE_DURATION = masterTL.duration();
+
+        /* Deterministic frame renderer for external capture tools */
+        window.renderAtTime = function (t) {
+            masterTL.seek(t);
+            updateAmbient(t);
+        };
+
+        if (window.CAPTURE_MODE) {
+            masterTL.pause(0);
+            // External renderer drives frames via window.renderAtTime(t)
+        } else {
+            masterTL.play(0);
+            gsap.ticker.add(() => updateAmbient(masterTL.time()));
+        }
+    </script>
+</body>
+
+</html>
