@@ -1,0 +1,149 @@
+#!/usr/bin/env node
+/**
+ * forge-new — Scaffold a new video project
+ *
+ * Creates a new directory with a scene file (from template) + theme file,
+ * so you can start building a new video format immediately.
+ *
+ * Usage:
+ *   node bin/forge-new <project-name> [--theme <name>]
+ *
+ * Examples:
+ *   node bin/forge-new podcast-promo
+ *   node bin/forge-new product-launch --theme podcast
+ *   node bin/forge-new web-series
+ *
+ * Creates:
+ *   <project-name>/
+ *   ├── scene.html          (copied from templates/scene-template.html)
+ *   ├── theme.js            (copied from themes/<Theme>.js, default: Forge)
+ *   ├── music.wav           (symlink to audio/forge_theme.wav)
+ *   └── README.md           (project-specific render instructions)
+ */
+
+const fs = require('fs');
+const path = require('path');
+const { Logger } = require('../src/core/Logger');
+
+function main() {
+  const logger = new Logger({ level: 'info', name: 'new' });
+  const args = process.argv.slice(2);
+
+  if (args.length === 0 || args[0] === '-h' || args[0] === '--help') {
+    console.log(fs.readFileSync(__filename, 'utf8')
+      .split('\n').filter(l => l.startsWith(' *')).map(l => l.slice(3)).join('\n'));
+    process.exit(0);
+  }
+
+  const projectName = args[0];
+  let themeName = 'Forge';
+
+  for (let i = 1; i < args.length; i++) {
+    if (args[i] === '--theme' && args[i + 1]) {
+      themeName = args[++i];
+    }
+  }
+
+  const projectRoot = path.resolve(__dirname, '..');
+  const projectDir = path.resolve(projectName);
+
+  if (fs.existsSync(projectDir)) {
+    logger.error('Directory already exists', { dir: projectDir });
+    process.exit(1);
+  }
+
+  // Normalize theme name: lowercase → Capitalized (e.g. "podcast" → "Podcast")
+  // so users can pass either form
+  const normalizedTheme = themeName.charAt(0).toUpperCase() + themeName.slice(1).toLowerCase();
+
+  // Validate theme exists
+  const themeFile = path.join(projectRoot, 'themes', `${normalizedTheme}Theme.js`);
+  if (!fs.existsSync(themeFile)) {
+    logger.error('Theme not found', { theme: themeName, expected: themeFile });
+    logger.info('Available themes:', {
+      themes: fs.readdirSync(path.join(projectRoot, 'themes')).filter(f => f.endsWith('Theme.js'))
+    });
+    process.exit(1);
+  }
+  themeName = normalizedTheme;
+
+  logger.info('Creating new video project', { name: projectName, theme: themeName, dir: projectDir });
+  fs.mkdirSync(projectDir, { recursive: true });
+
+  // 1. Copy scene template
+  const templatePath = path.join(projectRoot, 'templates', 'scene-template.html');
+  const scenePath = path.join(projectDir, 'scene.html');
+  fs.copyFileSync(templatePath, scenePath);
+  logger.info('Created scene.html', { from: templatePath });
+
+  // 2. Copy theme
+  const themeDest = path.join(projectDir, 'theme.js');
+  fs.copyFileSync(themeFile, themeDest);
+  logger.info('Created theme.js', { theme: themeName });
+
+  // 3. Symlink default music (or copy if symlink fails)
+  const musicSrc = path.join(projectRoot, 'audio', 'forge_theme.wav');
+  const musicDest = path.join(projectDir, 'music.wav');
+  try {
+    fs.symlinkSync(musicSrc, musicDest);
+  } catch {
+    fs.copyFileSync(musicSrc, musicDest);
+  }
+  logger.info('Linked music.wav');
+
+  // 4. Write project-specific README
+  const readme = `# ${projectName}
+
+A new video project scaffolded with the **${themeName}** theme.
+
+## Render
+
+From the project root:
+
+\`\`\`bash
+node ../bin/forge-render scene.html \\
+    --output output.mp4 \\
+    --music music.wav \\
+    --theme theme.js \\
+    --gpu --encoder auto \\
+    --fps 30 --target-fps 60
+\`\`\`
+
+Or from this directory:
+
+\`\`\`bash
+node bin/forge-render scene.html \\
+    --output ../${projectName}/output.mp4 \\
+    --music ../${projectName}/music.wav \\
+    --theme ../${projectName}/theme.js
+\`\`\`
+
+## Customize
+
+- **Scene**: edit \`scene.html\` — change text, layout, animation timeline
+- **Theme**: edit \`theme.js\` — change colors, fonts, motion, particles
+- **Music**: replace \`music.wav\` or generate new: \`node bin/forge-music --out music.wav --bpm 120\`
+
+## Switch themes
+
+Try your scene with a different theme:
+
+\`\`\`bash
+node ../bin/forge-render scene.html --theme ../themes/PodcastTheme.js --output output-podcast.mp4
+node ../bin/forge-render scene.html --theme ../themes/MinimalTheme.js --output output-minimal.mp4
+\`\`\`
+
+The same scene HTML will look completely different — that's the power of theme-aware scenes.
+`;
+  fs.writeFileSync(path.join(projectDir, 'README.md'), readme);
+  logger.info('Created README.md');
+
+  console.log(`\n✓ Project created: ${projectDir}`);
+  console.log(`\nNext steps:`);
+  console.log(`  cd ${path.basename(projectDir)}`);
+  console.log(`  # Edit scene.html to design your video`);
+  console.log(`  # Edit theme.js to change the visual identity`);
+  console.log(`  node ../bin/forge-render scene.html --output output.mp4 --music music.wav --theme theme.js`);
+}
+
+main();

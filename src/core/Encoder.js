@@ -90,19 +90,22 @@ class Encoder {
   }
 
   /**
-   * Build the audio args (codec, bitrate, optional input).
+   * Build the audio OUTPUT args (codec, bitrate, shortest).
+   *
+   * NOTE: This does NOT include the `-i audioPath` input flag — that's
+   * added separately by each encoder's `_encode()` method via the
+   * `audioInput` array, which places it BEFORE the video codec args
+   * (where ffmpeg expects input options). Including `-i` here would
+   * cause a duplicate input and ffmpeg would fail with:
+   *   "Option b:v cannot be applied to input url ..."
    */
   _audioArgs(audioPath) {
-    const args = [];
-    if (audioPath) {
-      args.push('-i', audioPath);
-    }
-    args.push(
+    if (!audioPath) return ['-an'];
+    return [
       '-c:a', this.config.get('audioCodec'),
       '-b:a', this.config.get('audioBitrate'),
       '-shortest'
-    );
-    return args;
+    ];
   }
 
   /**

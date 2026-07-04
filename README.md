@@ -20,10 +20,18 @@ digital-forge-reel/
 │   ├── forge-render              # main render command
 │   ├── forge-setup               # install all deps (Colab-aware)
 │   ├── forge-music               # generate background music
+│   ├── forge-new                 # scaffold a new video project (scene + theme)
 │   └── forge-fix-chromium        # one-shot fix for Colab snap-stub issue
 ├── scenes/                       # self-contained HTML scenes
 │   ├── digital-forge-reel-en.html   # English version (Digital Forge reel)
-│   └── digital-forge-reel-ar.html   # Algerian Darija version (RTL Arabic)
+│   ├── digital-forge-reel-ar.html   # Algerian Darija version (RTL Arabic)
+│   └── podcast-promo.html           # Example: a different format (3-scene editorial)
+├── themes/                       # theme-aware visual identities
+│   ├── ForgeTheme.js                # dark + fiery (default)
+│   ├── PodcastTheme.js              # cream + burgundy (editorial)
+│   └── MinimalTheme.js              # bare bones (testing)
+├── templates/
+│   └── scene-template.html       # theme-aware skeleton — copy to start a new scene
 ├── src/
 │   ├── core/                     # engine — abstractions + orchestration
 │   │   ├── Logger.js             # structured, leveled logging
@@ -31,6 +39,8 @@ digital-forge-reel/
 │   │   ├── Encoder.js            # abstract encoder interface
 │   │   ├── Pipeline.js           # orchestrates capture → encode → cleanup
 │   │   ├── Setup.js              # env bootstrap (Colab / Linux / Mac)
+│   │   ├── Theme.js              # theme validation + CSS/JS serialization
+│   │   ├── ThemeLoader.js        # loads theme files (.js or .json)
 │   │   ├── rendererFactory.js
 │   │   └── encoderFactory.js
 │   ├── renderers/
@@ -129,6 +139,7 @@ See **[docs/GPU.md](docs/GPU.md)** for VAAPI/QSV/VideoToolbox variants.
 | `--scale <0.1-4>` | 1.0 | Capture scale. 0.5 = half-res (fast), 1.0 = native, 2.0 = 4K |
 | `--encoder <auto\|cpu\|nvenc\|vaapi\|qsv\|videotoolbox>` | auto | Video encoder |
 | `--gpu` | off | Enable Chrome GPU rasterization |
+| `--theme <path>` | null | Theme file (themes/X.js) — injects colors/fonts/motion as CSS vars |
 | `--crf <0-51>` | 18 | Quality (lower = better, 18 = visually lossless) |
 | `--interpolate <dup\|mi>` | dup | Frame interpolation (`mi` = minterpolate, smoother but slow) |
 | `--start <n>` | 0 | Start frame (for resumable rendering) |
@@ -141,11 +152,27 @@ See **[docs/GPU.md](docs/GPU.md)** for VAAPI/QSV/VideoToolbox variants.
 
 - **[docs/INSTALL.md](docs/INSTALL.md)** — installation for every platform
 - **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — how the pipeline works
+- **[docs/NEW-VIDEO-EXTENSION.md](docs/NEW-VIDEO-EXTENSION.md)** — **build a completely new video format** ⭐
 - **[docs/RENDERING.md](docs/RENDERING.md)** — capture strategies, fps, scaling
 - **[docs/GPU.md](docs/GPU.md)** — NVENC / VAAPI / QSV / VideoToolbox
 - **[docs/COLAB.md](docs/COLAB.md)** — Google Colab guide
 - **[docs/CUSTOMIZATION.md](docs/CUSTOMIZATION.md)** — write your own scene
+- **[docs/CONFIG.md](docs/CONFIG.md)** — every CLI flag + env var
 - **[docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)** — common issues
+
+## Building a new video format
+
+The system is designed for **1000% flexibility** — every aspect (scene, theme, animation, renderer, encoder, audio) is independently swappable.
+
+```bash
+# Scaffold a new video project with a theme
+node bin/forge-new my-podcast-promo --theme podcast
+cd my-podcast-promo
+# Edit scene.html + theme.js
+node ../bin/forge-render scene.html --output output.mp4 --music music.wav --theme theme.js
+```
+
+See **[docs/NEW-VIDEO-EXTENSION.md](docs/NEW-VIDEO-EXTENSION.md)** for the full guide — covers the 6 axes of customization, the scene contract, theme system, swapping animation libraries (GSAP / Anime.js / Three.js / Lottie), adding new renderers/encoders/audio generators, multi-format project structure, and a worked podcast-promo example.
 
 ## License
 

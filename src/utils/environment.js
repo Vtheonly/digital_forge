@@ -203,6 +203,12 @@ function _findPlaywrightChromiumInDir(cacheDir) {
 /**
  * Returns recommended Playwright launch args for the current environment.
  * Colab needs --no-sandbox and other flags; local can be more permissive.
+ *
+ * GPU behavior is controlled by the FORGE_USE_GPU env var:
+ *   FORGE_USE_GPU=1  → enable GPU rasterization (requires GPU + drivers)
+ *   (not set)        → disable GPU (software rasterizer, more reliable for headless)
+ *
+ * The renderer sets FORGE_USE_GPU=1 when the --gpu CLI flag is passed.
  */
 function recommendedChromiumArgs() {
   const envInfo = detect();
@@ -232,18 +238,22 @@ function recommendedChromiumArgs() {
     args.push('--no-sandbox', '--disable-setuid-sandbox');
   }
 
-  // GPU flag depends on config + environment
+  // GPU flag: check the FORGE_USE_GPU env var (set by renderer when --gpu is passed)
   if (process.env.FORGE_USE_GPU === '1') {
-    // Remove the disable-gpu flag if present (we never add it by default, but just in case)
-    const gpuIdx = args.indexOf('--disable-gpu');
-    if (gpuIdx >= 0) args.splice(gpuIdx, 1);
-    args.push('--enable-gpu-rasterization', '--ignore-gpu-blocklist');
+    // GPU mode: don't add --disable-gpu, add GPU acceleration flags instead
+    args.push(
+      '--enable-gpu-rasterization',
+      '--ignore-gpu-blocklist'
+    );
     // On Linux headless with NVIDIA, EGL is the right GL backend
     if (envInfo.isLinux && envInfo.hasNvidia) {
       args.push('--use-gl=egl', '--enable-features=Vulkan');
     }
+    // Use new headless mode — old --headless forces software rendering
+    args.push('--headless=new');
   } else {
-    args.push('--disable-gpu');  // software rasterizer — more reliable for headless
+    // CPU mode: software rasterizer (more reliable for headless capture)
+    args.push('--disable-gpu', '--headless');
   }
 
   return args;

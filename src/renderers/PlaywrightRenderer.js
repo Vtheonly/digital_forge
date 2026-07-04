@@ -71,19 +71,27 @@ class PlaywrightRenderer extends Renderer {
       viewport: `${captureW}x${captureH}`,
       deviceScaleFactor: dsf,
       useGpu: c.get('useGpu'),
+      hasNvidia: envInfo.hasNvidia,
       isColab: envInfo.isColab
     });
+
+    // Bridge config.useGpu → FORGE_USE_GPU env var so recommendedChromiumArgs()
+    // picks it up. Without this, the --gpu CLI flag and recommendedChromiumArgs()
+    // were checking two different signals, so Chrome always got --disable-gpu.
+    if (c.get('useGpu')) {
+      process.env.FORGE_USE_GPU = '1';
+      this.logger.info('GPU mode enabled', {
+        hasNvidia: envInfo.hasNvidia,
+        note: envInfo.hasNvidia
+          ? 'Chrome will use GPU rasterization (--headless=new + EGL)'
+          : 'No NVIDIA GPU detected — Chrome will fall back to software'
+      });
+    }
 
     // Build launch args
     let args = c.get('browserArgs');
     if (!args) {
       args = env.recommendedChromiumArgs();
-      // GPU flag depends on config + environment
-      if (c.get('useGpu') && envInfo.hasNvidia) {
-        args = args.filter(a => a !== '--disable-gpu');
-        args.push('--enable-gpu-rasterization', '--ignore-gpu-blocklist',
-                  '--use-gl=egl');
-      }
     }
 
     // Find Chromium binary
@@ -166,6 +174,25 @@ class PlaywrightRenderer extends Renderer {
       waitUntil: 'load',
       timeout: 30000
     });
+
+    // === THEME INJECTION ===
+    // If a theme is configured, inject its CSS variables + JS object BEFORE
+    // the scene's own script runs its initialization. This lets theme-aware
+    // scenes pick up colors/fonts/motion from the theme.
+    const themeSource = c.get('theme');
+    if (themeSource) {
+      const { ThemeLoader } = require('../core/ThemeLoader');
+      const { themeToCSS, themeToJS } = require('../core/Theme');
+      const loader = new ThemeLoader(this.logger);
+      const theme = loader.load(themeSource);
+      const css = themeToCSS(theme);
+      const js = themeToJS(theme);
+      this.logger.info('Injecting theme', { name: theme.name });
+      await this.page.addStyleTag({ content: css });
+      await this.page.evaluate((themeObj) => {
+        window.theme = themeObj;
+      }, js);
+    }
 
     // Wait for the scene's renderAtTime function to be ready
     await this.page.waitForFunction(

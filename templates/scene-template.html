@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scene Template — Theme-Aware Skeleton</title>
+
+<!--
+  ============================================================================
+  SCENE TEMPLATE — copy this file to start a new scene
+  ============================================================================
+
+  This template is "theme-aware": it uses CSS variables (var(--accent), etc.)
+  instead of hardcoded colors. The renderer injects the theme's CSS variables
+  before rendering, so the SAME scene HTML looks completely different with
+  different themes.
+
+  Required exports (the renderer contract):
+    window.masterTL      — GSAP Timeline with .seek(t) and .duration()
+    window.renderAtTime  — function(t) that seeks + redraws
+
+  To create a new scene:
+    1. Copy this file to scenes/your-scene.html
+    2. Edit the <body> content
+    3. Edit the timeline in <script>
+    4. Render: node bin/forge-render scenes/your-scene.html --theme themes/YourTheme.js
+  ============================================================================
+-->
+
+<!-- Load fonts for ALL themes you might use (cheap — only fetched if used) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=Playfair+Display:wght@700;900&family=Crimson+Text:wght@400;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+<!-- Animation library: GSAP (swap for Anime.js, Tween.js, etc. — see docs/NEW-VIDEO-EXTENSION.md) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 1080px; height: 1920px;
+    overflow: hidden;
+    /* ↓ Theme variables — set by renderer, fall back to defaults */
+    background: var(--bg, #0a0a10);
+    color: var(--fg, #fff);
+    font-family: var(--font-body, system-ui);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  #stage {
+    width: 1080px; height: 1920px;
+    position: relative;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: var(--pad, 80px);
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono, monospace);
+    font-size: 32px;
+    letter-spacing: 8px;
+    text-transform: uppercase;
+    color: var(--accent, #ff6b1a);
+    margin-bottom: 40px;
+    opacity: 0;
+  }
+
+  h1 {
+    font-family: var(--font-display, system-ui);
+    font-weight: 900;
+    font-size: 140px;
+    line-height: 1;
+    letter-spacing: -3px;
+    text-align: center;
+  }
+  h1 .word {
+    display: inline-block;
+    opacity: 0;
+  }
+  h1 .accent {
+    color: var(--accent, #ff6b1a);
+  }
+
+  .sub {
+    margin-top: 50px;
+    font-size: 36px;
+    color: var(--muted, rgba(255,255,255,0.65));
+    text-align: center;
+    opacity: 0;
+    max-width: 800px;
+  }
+
+  .watermark {
+    position: absolute;
+    bottom: 80px;
+    font-family: var(--font-mono, monospace);
+    font-size: 24px;
+    color: var(--muted, rgba(255,255,255,0.4));
+    letter-spacing: 2px;
+  }
+
+  /* Particle canvas — fills the stage, drawn by JS */
+  #particles {
+    position: absolute; inset: 0;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Content sits above particles */
+  #stage > *:not(#particles) { z-index: 2; position: relative; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="particles"></canvas>
+  <div class="eyebrow">// your tagline</div>
+  <h1>
+    <span class="word">YOUR</span>
+    <span class="word accent">BRAND</span>
+  </h1>
+  <p class="sub">A short, punchy value proposition that fits on one line.</p>
+  <div class="watermark" id="watermark">@yourbrand</div>
+</div>
+
+<script>
+/* ============================================================
+   SCENE TEMPLATE — animation + renderer contract
+   ============================================================ */
+
+// ---- Particle system (theme-aware) ---------------------------------------
+// Reads theme.particleStyle to decide what kind of particles to draw.
+// Supports: 'embers', 'dust', 'snow', 'confetti', 'bubbles', 'none'
+
+const canvas = document.getElementById('particles');
+const ctx = canvas.getContext('2d');
+canvas.width = 1080; canvas.height = 1920;
+
+const particles = [];
+
+function spawnParticle() {
+  const style = (window.theme && window.theme.decor && window.theme.decor.particleStyle) || 'none';
+  if (style === 'none') return;
+
+  const color = (window.theme && window.theme.decor && window.theme.decor.particleColor) || '#ffffff';
+  const p = {
+    x: Math.random() * 1080,
+    y: 1920 + 20,
+    vx: (Math.random() - 0.5) * 0.6,
+    vy: -0.5 - Math.random() * 1.5,
+    life: 1,
+    decay: 0.002 + Math.random() * 0.002,
+    size: 1.5 + Math.random() * 2,
+    color, style
+  };
+
+  if (style === 'embers') {
+    p.vy = -1 - Math.random() * 2;
+    p.size = 1 + Math.random() * 2.5;
+  } else if (style === 'dust') {
+    p.vy = -0.2 - Math.random() * 0.4;
+    p.vx = (Math.random() - 0.5) * 0.3;
+    p.size = 0.8 + Math.random() * 1.5;
+    p.decay = 0.0008 + Math.random() * 0.001;
+  } else if (style === 'snow') {
+    p.vy = -0.3 - Math.random() * 0.8;
+    p.size = 2 + Math.random() * 3;
+    p.decay = 0.0005 + Math.random() * 0.0008;
+  }
+  particles.push(p);
+}
+
+// Pre-spawn for first-frame population
+for (let i = 0; i < 60; i++) {
+  spawnParticle();
+  if (particles.length) {
+    const p = particles[particles.length - 1];
+    p.y = Math.random() * 1920;
+    p.life = 0.3 + Math.random() * 0.7;
+  }
+}
+
+function drawParticles(t) {
+  ctx.clearRect(0, 0, 1080, 1920);
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx;
+    p.y += p.vy;
+    p.life -= p.decay;
+    if (p.life <= 0 || p.y < -50) { particles.splice(i, 1); continue; }
+    ctx.globalAlpha = p.life * 0.8;
+    ctx.fillStyle = p.color;
+    ctx.shadowBlur = 8;
+    ctx.shadowColor = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  ctx.shadowBlur = 0;
+}
+
+// ---- Timeline -------------------------------------------------------------
+// Reads theme.motion for easing/duration defaults.
+// Use these to make the scene automatically adapt to the theme's mood.
+
+const theme = window.theme || {};
+const motion = theme.motion || {};
+const ease = motion.defaultEase || 'power2.out';
+const dur = motion.defaultDuration || 0.5;
+const stagger = motion.stagger || 0.1;
+
+const masterTL = gsap.timeline({ paused: true });
+
+masterTL.to('.eyebrow', { opacity: 1, duration: dur, ease }, 0.2);
+masterTL.to('.word', {
+  opacity: 1, y: 0,
+  duration: dur, stagger, ease
+}, 0.5);
+masterTL.to('.sub', { opacity: 1, duration: dur, ease }, 0.5 + 2 * stagger + dur);
+masterTL.to({}, { duration: 1.5 }); // hold
+
+// ---- Watermark from theme -------------------------------------------------
+if (theme.assets && theme.assets.watermark) {
+  document.getElementById('watermark').textContent = theme.assets.watermark;
+}
+
+// ---- RENDERER CONTRACT ----------------------------------------------------
+window.masterTL = masterTL;
+window.renderMode = (location.hash !== '#live');
+
+window.renderAtTime = function(t) {
+  masterTL.seek(t);
+  // For deterministic capture, we re-draw particles based on t
+  // (Simple approach: just keep drawing — particles are decorative)
+  drawParticles(t);
+};
+
+// Live preview mode
+if (!window.renderMode) {
+  function liveLoop() {
+    drawParticles(performance.now() / 1000);
+    requestAnimationFrame(liveLoop);
+  }
+  liveLoop();
+  masterTL.play();
+}
+</script>
+</body>
+</html>

@@ -17,6 +17,8 @@
  *   --gpu                      Enable GPU rasterization in Chrome (use this on GPU runtimes)
  *   --music <path>             Background music WAV/MP3 (skipped if not provided)
  *   --generate-music           Auto-generate music if --music not given
+ *   --theme <path>             Theme file (themes/X.js or .json) — injects CSS vars + window.theme
+ *   --theme-json '<json>'      Inline theme JSON (alternative to --theme)
  *   --crf <0-51>               Quality (default: 18, lower = better)
  *   --preset <name>            Encoder preset (default: medium)
  *   --interpolate <dup|mi>     Frame interpolation: 'dup' (fast) or 'mi' (minterpolate, slow but smooth)
@@ -91,6 +93,8 @@ function parseArgs(argv) {
       case '--gpu': opts.useGpu = true; break;
       case '--music': opts.musicPath = next(); break;
       case '--generate-music': opts.generateMusic = true; break;
+      case '--theme': opts.theme = next(); break;
+      case '--theme-json': opts.theme = next(); break;
       case '--crf': opts.crf = parseInt(next(), 10); break;
       case '--preset': opts.preset = next(); break;
       case '--interpolate':

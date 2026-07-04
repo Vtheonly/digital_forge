@@ -48,6 +48,9 @@ const DEFAULTS = {
   musicPath:       null,                    // path to wav/mp3
   generateMusic:   false,                   // if true, run music generator
 
+  // ===== Theme =====
+  theme:           null,                    // path to theme file (themes/X.js) or inline JSON
+
   // ===== GPU =====
   useGpu:          false,                   // pass --enable-gpu to Chrome for capture
   gpuRenderer:     null,                    // override chrome --use-gl flag
