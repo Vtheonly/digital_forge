@@ -1,171 +1,235 @@
-#!/usr/bin/env node
 /**
- * _RenderWorker.js — Worker process for ParallelPlaywrightRenderer
- *
- * This is a standalone script that:
- *   1. Parses frame-range + config from process.argv
- *   2. Boots a PlaywrightRenderer instance
- *   3. Captures its assigned frames
- *   4. Emits JSON log lines on stdout (the parent reads these)
- *   5. Exits 0 on success, non-zero on failure
- *
- * Communication protocol (stdout):
- *   {"type":"log","level":"info","msg":"...","ctx":{...},"workerIdx":N}
- *   {"type":"progress","captured":N,"total":M,"workerIdx":N}
- *
- * The parent ParallelPlaywrightRenderer spawns one of these per CPU core,
- * giving each a non-overlapping chunk of frames to capture.
- *
- * This script is intentionally self-contained — it doesn't import anything
- * from the parent process state. All config comes via argv + env vars.
+ * ParallelPlaywrightRenderer.js — Spawns parallel worker processes to capture frames
  */
 
-const path = require('path');
-const fs = require('fs');
+const { fork } = require("child_process");
+const path = require("path");
+const { Renderer } = require("../core/Renderer");
+const { RenderError } = require("../utils/errors");
+const { chromium } = require("playwright");
+const env = require("../utils/environment");
+const { fileExists, fileSize } = require("../utils/fs");
 
-// Parse argv
-function parseArgs(argv) {
-  const opts = {};
-  for (let i = 2; i < argv.length; i++) {
-    const a = argv[i];
-    const next = () => argv[++i];
-    switch (a) {
-      case '--html-path': opts.htmlPath = next(); break;
-      case '--frames-dir': opts.framesDir = next(); break;
-      case '--frame-indices': opts.frameIndices = next().split(',').map(Number); break;
-      case '--fps': opts.fps = parseInt(next(), 10); break;
-      case '--width': opts.width = parseInt(next(), 10); break;
-      case '--height': opts.height = parseInt(next(), 10); break;
-      case '--capture-scale': opts.captureScale = parseFloat(next()); break;
-      case '--frame-format': opts.frameFormat = next(); break;
-      case '--jpeg-quality': opts.jpegQuality = parseInt(next(), 10); break;
-      case '--use-gpu': opts.useGpu = next() === '1'; break;
-      case '--verify-gpu': opts.verifyGpu = next() === '1'; break;
-      case '--time-scale': opts.timeScale = parseFloat(next()); break;
-      case '--theme': opts.theme = next() || null; break;
-      case '--executable-path': opts.executablePath = next() || null; break;
-      case '--browser-args': {
-        const raw = next();
-        opts.browserArgs = raw ? JSON.parse(raw) : null;
-        break;
-      }
-      case '--log-level': opts.logLevel = next(); break;
-      case '--worker-idx': opts.workerIdx = parseInt(next(), 10); break;
-    }
-  }
-  return opts;
-}
-
-// Stdout-only JSON logger (so parent can parse)
-class WorkerLogger {
-  constructor(level, workerIdx) {
-    this.level = level || 'info';
-    this.workerIdx = workerIdx;
-    this.levels = { debug: 10, info: 20, warn: 30, error: 40, fatal: 50 };
-  }
-  _shouldLog(l) { return (this.levels[l] || 0) >= (this.levels[this.level] || 0); }
-  _emit(level, msg, ctx) {
-    if (!this._shouldLog(level)) return;
-    process.stdout.write(JSON.stringify({
-      type: 'log', level, msg, ctx: ctx || {}, workerIdx: this.workerIdx
-    }) + '\n');
-  }
-  debug(msg, ctx) { this._emit('debug', msg, ctx); }
-  info(msg, ctx)  { this._emit('info', msg, ctx); }
-  warn(msg, ctx)  { this._emit('warn', msg, ctx); }
-  error(msg, ctx) { this._emit('error', msg, ctx); }
-  fatal(msg, ctx) { this._emit('fatal', msg, ctx); }
-  child() { return this; }
-}
-
-async function main() {
-  const opts = parseArgs(process.argv);
-  if (!opts.htmlPath || !opts.frameIndices || opts.frameIndices.length === 0) {
-    console.error(JSON.stringify({ type: 'error', msg: 'Missing required args', opts }));
-    process.exit(2);
+class ParallelPlaywrightRenderer extends Renderer {
+  constructor(config, logger) {
+    super(config, logger);
+    this._duration = null;
   }
 
-  const logger = new WorkerLogger(opts.logLevel, opts.workerIdx);
-  logger.info('Worker starting', {
-    workerIdx: opts.workerIdx,
-    frames: opts.frameIndices.length,
-    firstFrame: opts.frameIndices[0],
-    lastFrame: opts.frameIndices[opts.frameIndices.length - 1],
-    useGpu: opts.useGpu
-  });
+  /**
+   * Probe scene duration using a single, lightweight browser instance before scaling
+   */
+  async _init() {
+    const c = this.config;
+    const htmlPath = path.resolve(c.get("htmlPath"));
+    const executablePath = env.findChromium();
+    const args = env.recommendedChromiumArgs();
 
-  // Build a Config for this worker
-  const { Config } = require('../config/Config');
-  const config = new Config({
-    htmlPath: opts.htmlPath,
-    framesDir: opts.framesDir,
-    fps: opts.fps,
-    width: opts.width,
-    height: opts.height,
-    captureScale: opts.captureScale,
-    frameFormat: opts.frameFormat,
-    jpegQuality: opts.jpegQuality,
-    useGpu: opts.useGpu,
-    verifyGpu: opts.verifyGpu,
-    timeScale: opts.timeScale || 1.0,
-    theme: opts.theme,
-    executablePath: opts.executablePath,
-    browserArgs: opts.browserArgs,
-    logLevel: opts.logLevel,
-    resumeFromDisk: false,  // parent already filtered; we capture everything we're told to
-    cleanFramesAfterEncode: false
-  });
+    this.logger.debug(
+      "Probing scene duration via temporary Chromium instance...",
+    );
+    let tempBrowser;
+    try {
+      tempBrowser = await chromium.launch({
+        args,
+        headless: true,
+        executablePath,
+      });
+      const ctx = await tempBrowser.newContext();
+      const page = await ctx.newPage();
+      await page.goto("file://" + htmlPath, {
+        waitUntil: "load",
+        timeout: 30000,
+      });
 
-  // Boot a single PlaywrightRenderer for this worker
-  const { PlaywrightRenderer } = require('./PlaywrightRenderer');
-  const renderer = new PlaywrightRenderer(config, logger);
-  await renderer.init();
+      await page.waitForFunction(
+        () =>
+          typeof window.masterTL === "object" &&
+          typeof window.masterTL.duration === "function",
+        { timeout: 15000 },
+      );
 
-  // Capture frames
-  const ext = opts.frameFormat === 'jpeg' ? 'jpg' : 'png';
-  let captured = 0;
-  const total = opts.frameIndices.length;
-  const t0 = Date.now();
+      const nativeDuration = await page.evaluate(() =>
+        window.masterTL.duration(),
+      );
+      const timeScale = c.get("timeScale");
+      this._duration = nativeDuration / timeScale;
 
-  try {
-    for (let i = 0; i < opts.frameIndices.length; i++) {
-      const frameIdx = opts.frameIndices[i];
-      const ts = frameIdx / opts.fps;
-      const framePath = path.join(opts.framesDir, `frame_${String(frameIdx).padStart(5, '0')}.${ext}`);
-
-      await renderer.renderFrame(ts, framePath);
-      captured++;
-
-      // Emit progress every 5 frames or on last frame
-      if (captured % 5 === 0 || i === opts.frameIndices.length - 1) {
-        const elapsed = (Date.now() - t0) / 1000;
-        const rate = captured / (elapsed || 1);
-        process.stdout.write(JSON.stringify({
-          type: 'progress',
-          captured,
-          total,
-          rate: +rate.toFixed(2),
-          workerIdx: opts.workerIdx,
-          lastFrame: frameIdx
-        }) + '\n');
+      this.logger.info("Scene duration probe complete", {
+        native: nativeDuration.toFixed(2) + "s",
+        timeScale,
+        capture: this._duration.toFixed(2) + "s",
+      });
+    } catch (e) {
+      throw new RenderError(`Failed to probe scene duration: ${e.message}`, {
+        cause: e,
+      });
+    } finally {
+      if (tempBrowser) {
+        await tempBrowser.close();
       }
     }
-  } finally {
-    await renderer.close();
   }
 
-  const elapsedSec = ((Date.now() - t0) / 1000).toFixed(1);
-  logger.info('Worker complete', {
-    workerIdx: opts.workerIdx,
-    captured,
-    elapsedSec,
-    rate: +(captured / (elapsedSec || 1)).toFixed(2)
-  });
+  async _getDuration() {
+    return this._duration;
+  }
 
-  process.exit(0);
+  /**
+   * Divide frames amongst configured workers and run them concurrently
+   */
+  async _renderFramesInRange(range, framesDir, options = {}) {
+    const c = this.config;
+    const numWorkers = c.get("workers");
+    const startFrame = range.startFrame;
+    const endFrame = range.endFrame;
+
+    let indices = [];
+    for (let i = startFrame; i < endFrame; i++) {
+      indices.push(i);
+    }
+
+    const frameFormat = c.get("frameFormat");
+    const ext = frameFormat === "jpeg" ? "jpg" : "png";
+
+    let skipped = 0;
+    if (c.get("resumeFromDisk")) {
+      const filtered = [];
+      for (const idx of indices) {
+        const framePath = path.join(
+          framesDir,
+          `frame_${String(idx).padStart(5, "0")}.${ext}`,
+        );
+        if (fileExists(framePath) && fileSize(framePath) > 3000) {
+          skipped++;
+        } else {
+          filtered.push(idx);
+        }
+      }
+      indices = filtered;
+    }
+
+    if (indices.length === 0) {
+      this.logger.info("All frames already exist on disk. Skipping capture.");
+      return { captured: 0, skipped };
+    }
+
+    const chunks = Array.from({ length: numWorkers }, () => []);
+    for (let i = 0; i < indices.length; i++) {
+      chunks[i % numWorkers].push(indices[i]);
+    }
+
+    this.logger.info(`Spawning ${numWorkers} parallel render workers`, {
+      totalFramesToRender: indices.length,
+      skippedExisting: skipped,
+    });
+
+    const workerScript = path.resolve(__dirname, "_RenderWorker.js");
+
+    const promises = chunks.map((chunk, workerIdx) => {
+      if (chunk.length === 0) return Promise.resolve(0);
+
+      return new Promise((resolve, reject) => {
+        const args = [
+          "--html-path",
+          c.get("htmlPath"),
+          "--frames-dir",
+          framesDir,
+          "--frame-indices",
+          chunk.join(","),
+          "--fps",
+          String(c.get("fps")),
+          "--width",
+          String(c.get("width")),
+          "--height",
+          String(c.get("height")),
+          "--capture-scale",
+          String(c.get("captureScale")),
+          "--frame-format",
+          c.get("frameFormat"),
+          "--jpeg-quality",
+          String(c.get("jpegQuality")),
+          "--use-gpu",
+          c.get("useGpu") ? "1" : "0",
+          "--verify-gpu",
+          c.get("verifyGpu") ? "1" : "0",
+          "--time-scale",
+          String(c.get("timeScale")),
+          "--worker-idx",
+          String(workerIdx),
+          "--log-level",
+          c.get("logLevel"),
+        ];
+
+        if (c.get("theme")) {
+          args.push("--theme", c.get("theme"));
+        }
+        if (c.get("executablePath")) {
+          args.push("--executable-path", c.get("executablePath"));
+        }
+        if (c.get("browserArgs")) {
+          args.push("--browser-args", JSON.stringify(c.get("browserArgs")));
+        }
+
+        const child = fork(workerScript, args, { silent: true });
+
+        let workerCaptured = 0;
+        const workerTotal = chunk.length;
+
+        child.stdout.on("data", (data) => {
+          const lines = data.toString().split("\n");
+          for (const line of lines) {
+            if (!line.trim()) continue;
+            try {
+              const msg = JSON.parse(line);
+              if (msg.type === "progress") {
+                workerCaptured = msg.captured;
+                if (options.onProgress) {
+                  options.onProgress(workerCaptured, workerTotal, workerIdx);
+                }
+              } else if (msg.type === "log") {
+                const level = msg.level || "info";
+                this.logger[level](`[w${workerIdx}] ${msg.msg}`, msg.ctx);
+              }
+            } catch {
+              this.logger.debug(`[w${workerIdx} stdout] ${line}`);
+            }
+          }
+        });
+
+        child.stderr.on("data", (data) => {
+          this.logger.error(`[w${workerIdx} stderr] ${data.toString().trim()}`);
+        });
+
+        child.on("error", (err) => {
+          reject(
+            new RenderError(`Worker ${workerIdx} failed: ${err.message}`, {
+              cause: err,
+            }),
+          );
+        });
+
+        child.on("exit", (code) => {
+          if (code !== 0) {
+            reject(
+              new RenderError(`Worker ${workerIdx} exited with code ${code}`),
+            );
+          } else {
+            resolve(workerCaptured);
+          }
+        });
+      });
+    });
+
+    const results = await Promise.all(promises);
+    const totalCaptured = results.reduce((sum, val) => sum + val, 0);
+
+    return { captured: totalCaptured, skipped };
+  }
+
+  async _close() {
+    // Parent maintains no long-lived resources
+  }
 }
 
-main().catch(e => {
-  process.stderr.write(`Worker fatal: ${e.message}\n${e.stack || ''}\n`);
-  process.exit(1);
-});
+module.exports = { ParallelPlaywrightRenderer };
