@@ -152,7 +152,6 @@ class PlaywrightRenderer extends Renderer {
       try {
         this.gpuStatus = await verifyGpu(this.page, this.logger);
 
-        // Classic fallback loop (only triggered if Xvfb wasn't pre-emptively running)
         if (!this.gpuStatus.gpuActive && !xvfbDisplay) {
           this.logger.warn(
             "GPU was requested but Chrome is using CPU rasterization (SwiftShader). Will try Xvfb (headed) fallback...",
@@ -302,11 +301,15 @@ class PlaywrightRenderer extends Renderer {
       `,
     });
 
+    // Disable CSS animations, CSS transitions, and layout filters to prevent timeline lag
     if (process.env.FORGE_FAST_MODE !== "0") {
       await this.page.addStyleTag({
         content: `
           *, *::before, *::after {
             animation: none !important;
+            transition: none !important;
+            transition-delay: 0s !important;
+            transition-duration: 0s !important;
             filter: none !important;
             box-shadow: none !important;
             text-shadow: none !important;
