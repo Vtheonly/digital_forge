@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Premium Reel — Developer Showcase</title>
+  <title>Premium Showcase</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
@@ -29,9 +29,6 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    /* ============================================================
-     Viewport wrapper — centers & scales the 1080x1920 stage
-     ============================================================ */
     #viewport {
       position: fixed;
       inset: 0;
@@ -51,13 +48,6 @@
       overflow: hidden;
     }
 
-    /* ============================================================
-     NESTED CAMERA SYSTEM
-     #camera   — punch-ins, whip transitions, blur
-     #drift    — slow continuous orbital drift
-     #shake    — handheld noise (high-freq, low-amp)
-     #stage    — the 1080x1920 content stage
-     ============================================================ */
     #camera,
     #drift,
     #shake,
@@ -85,9 +75,6 @@
       overflow: hidden;
     }
 
-    /* ============================================================
-     BACKGROUND LAYERS — always moving, never static
-     ============================================================ */
     .bg-layer {
       position: absolute;
       inset: -10%;
@@ -96,25 +83,27 @@
 
     #bg-gradient {
       background:
-        radial-gradient(ellipse 70% 50% at 50% 100%, rgba(255, 107, 26, 0.30) 0%, transparent 60%),
-        radial-gradient(ellipse 60% 40% at 50% 0%, rgba(94, 158, 255, 0.14) 0%, transparent 60%),
-        linear-gradient(180deg, #0a0a14 0%, #14100a 50%, #1a0d04 100%);
-      transition: background 0.8s ease, opacity 0.6s ease;
+        radial-gradient(ellipse 70% 50% at 50% 100%, rgba(255, 107, 26, 0.15) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 50% 0%, rgba(94, 158, 255, 0.08) 0%, transparent 60%),
+        linear-gradient(180deg, #0a0a14 0%, #110e14 50%, #0d0a14 100%);
+      z-index: 1;
     }
 
-    /* Problem scene turns the world red */
-    #bg-gradient.problem-mode {
+    #bg-problem {
       background:
-        radial-gradient(ellipse 70% 50% at 50% 50%, rgba(255, 30, 60, 0.40) 0%, transparent 60%),
+        radial-gradient(ellipse 70% 50% at 50% 50%, rgba(255, 30, 60, 0.35) 0%, transparent 60%),
         linear-gradient(180deg, #140406 0%, #1a0608 50%, #0a0203 100%);
+      z-index: 2;
+      opacity: 0;
     }
 
-    /* Solution clears to forge ambience */
-    #bg-gradient.solution-mode {
+    #bg-solution {
       background:
-        radial-gradient(ellipse 80% 60% at 50% 100%, rgba(255, 140, 40, 0.50) 0%, transparent 65%),
-        radial-gradient(ellipse 60% 40% at 50% 0%, rgba(255, 184, 0, 0.20) 0%, transparent 60%),
+        radial-gradient(ellipse 80% 60% at 50% 100%, rgba(255, 140, 40, 0.40) 0%, transparent 65%),
+        radial-gradient(ellipse 60% 40% at 50% 0%, rgba(255, 184, 0, 0.15) 0%, transparent 60%),
         linear-gradient(180deg, #0a0810 0%, #1a1004 50%, #2a1404 100%);
+      z-index: 3;
+      opacity: 0;
     }
 
     #bg-mesh {
@@ -124,23 +113,7 @@
         radial-gradient(circle at 50% 50%, rgba(255, 184, 0, 0.14), transparent 45%);
       filter: blur(50px);
       opacity: 0.85;
-      animation: meshDrift 18s ease-in-out infinite;
-    }
-
-    @keyframes meshDrift {
-
-      0%,
-      100% {
-        transform: translate(0, 0) scale(1);
-      }
-
-      33% {
-        transform: translate(-40px, 30px) scale(1.06);
-      }
-
-      66% {
-        transform: translate(30px, -20px) scale(0.97);
-      }
+      z-index: 4;
     }
 
     #bg-grid {
@@ -150,17 +123,7 @@
       background-size: 70px 70px;
       opacity: 0.4;
       mask-image: radial-gradient(ellipse at center, black 30%, transparent 78%);
-      animation: gridShift 25s linear infinite;
-    }
-
-    @keyframes gridShift {
-      from {
-        background-position: 0 0;
-      }
-
-      to {
-        background-position: 70px 70px;
-      }
+      z-index: 5;
     }
 
     #bg-rays {
@@ -174,17 +137,7 @@
           rgba(255, 140, 40, 0.06) 100deg,
           transparent 140deg);
       opacity: 0.7;
-      animation: raysRotate 30s linear infinite;
-    }
-
-    @keyframes raysRotate {
-      from {
-        transform: rotate(0deg);
-      }
-
-      to {
-        transform: rotate(360deg);
-      }
+      z-index: 6;
     }
 
     #sparks-canvas {
@@ -196,7 +149,6 @@
       z-index: 50;
     }
 
-    /* Vignette + film grain overlay */
     #vignette {
       position: absolute;
       inset: 0;
@@ -214,72 +166,6 @@
       opacity: 0.06;
       background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
       mix-blend-mode: overlay;
-      animation: grainShift 0.3s steps(3) infinite;
-    }
-
-    @keyframes grainShift {
-      0% {
-        transform: translate(0, 0);
-      }
-
-      33% {
-        transform: translate(-2%, 1%);
-      }
-
-      66% {
-        transform: translate(1%, -2%);
-      }
-
-      100% {
-        transform: translate(0, 0);
-      }
-    }
-
-    /* ============================================================
-     Persistent UI overlays
-     ============================================================ */
-    .handle-pill {
-      position: absolute;
-      top: 90px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 70;
-      background: rgba(255, 255, 255, 0.95);
-      color: #0a0a10;
-      padding: 14px 32px;
-      border-radius: 100px;
-      font-family: 'Space Grotesk', sans-serif;
-      font-weight: 700;
-      font-size: 26px;
-      letter-spacing: 0.5px;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
-      opacity: 0;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .handle-pill .dot {
-      width: 10px;
-      height: 10px;
-      background: #ff3b5c;
-      border-radius: 50%;
-      box-shadow: 0 0 12px #ff3b5c;
-      animation: livePulse 1.4s ease-in-out infinite;
-    }
-
-    @keyframes livePulse {
-
-      0%,
-      100% {
-        opacity: 1;
-        transform: scale(1);
-      }
-
-      50% {
-        opacity: 0.5;
-        transform: scale(0.8);
-      }
     }
 
     #progress-track {
@@ -315,9 +201,6 @@
       opacity: 0;
     }
 
-    /* ============================================================
-     SCENE BASE
-     ============================================================ */
     .scene {
       position: absolute;
       inset: 0;
@@ -330,9 +213,6 @@
       padding: 120px 80px;
     }
 
-    /* ============================================================
-     TYPOGRAPHY UTILITIES
-     ============================================================ */
     .headline {
       font-family: 'Inter', sans-serif;
       font-weight: 900;
@@ -357,14 +237,12 @@
       color: transparent;
     }
 
-    /* Word container — for word-by-word reveal */
     .word {
       display: inline-block;
       opacity: 0;
       transform: translateY(60px) rotateX(-30deg);
     }
 
-    /* Letter container — for letter-by-letter reveal */
     .letter {
       display: inline-block;
       opacity: 0;
@@ -380,9 +258,6 @@
       filter: drop-shadow(0 0 25px rgba(255, 140, 40, 0.7));
     }
 
-    /* ============================================================
-     CAPTION SYSTEM — lower-third service labels
-     ============================================================ */
     .caption-box {
       position: absolute;
       bottom: 240px;
@@ -408,7 +283,7 @@
     .caption-headline {
       font-family: 'Inter', sans-serif;
       font-weight: 900;
-      font-size: 120px;
+      font-size: 100px;
       line-height: 1.0;
       letter-spacing: -2px;
       color: #fff;
@@ -441,9 +316,6 @@
       font-weight: 900;
     }
 
-    /* ============================================================
-     SCENE 1: HOOK
-     ============================================================ */
     #scene-hook .hook-eyebrow {
       font-family: 'JetBrains Mono', monospace;
       font-weight: 700;
@@ -482,23 +354,36 @@
       border-radius: 40px;
     }
 
-    /* ============================================================
-     SCENE 2: PROBLEM (glitch mode)
-     ============================================================ */
     #scene-problem {
       background: radial-gradient(ellipse at center, rgba(255, 30, 60, 0.15) 0%, transparent 70%);
+    }
+
+    .problem-content-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 5;
+      text-align: center;
+      width: 100%;
+      max-width: 960px;
+      padding: 0 40px;
     }
 
     .glitch-text {
       position: relative;
       font-family: 'Inter', sans-serif;
       font-weight: 900;
-      font-size: 220px;
-      letter-spacing: -6px;
-      line-height: 0.9;
+      font-size: 52px;
+      letter-spacing: -1px;
+      line-height: 1.2;
       color: #fff;
       text-align: center;
       opacity: 0;
+      margin: 15px 0;
+      width: 100%;
+      max-width: 920px;
+      word-wrap: break-word;
     }
 
     .glitch-text::before,
@@ -515,66 +400,11 @@
     .glitch-text::before {
       color: #ff0040;
       z-index: -1;
-      animation: glitchA 0.45s steps(2) infinite;
     }
 
     .glitch-text::after {
       color: #00e5ff;
       z-index: -2;
-      animation: glitchB 0.5s steps(2) infinite;
-    }
-
-    @keyframes glitchA {
-
-      0%,
-      100% {
-        transform: translate(0);
-        clip-path: inset(0 0 0 0);
-      }
-
-      20% {
-        transform: translate(-6px, 3px);
-        clip-path: inset(20% 0 40% 0);
-      }
-
-      40% {
-        transform: translate(5px, -4px);
-        clip-path: inset(60% 0 10% 0);
-      }
-
-      60% {
-        transform: translate(-4px, -3px);
-        clip-path: inset(30% 0 50% 0);
-      }
-
-      80% {
-        transform: translate(3px, 4px);
-        clip-path: inset(80% 0 5% 0);
-      }
-    }
-
-    @keyframes glitchB {
-
-      0%,
-      100% {
-        transform: translate(0);
-        clip-path: inset(0 0 0 0);
-      }
-
-      25% {
-        transform: translate(4px, -3px);
-        clip-path: inset(50% 0 20% 0);
-      }
-
-      50% {
-        transform: translate(-3px, 4px);
-        clip-path: inset(10% 0 70% 0);
-      }
-
-      75% {
-        transform: translate(5px, 2px);
-        clip-path: inset(70% 0 15% 0);
-      }
     }
 
     #scene-problem .problem-or {
@@ -583,7 +413,7 @@
       font-size: 38px;
       color: rgba(255, 255, 255, 0.4);
       letter-spacing: 8px;
-      margin: 20px 0;
+      margin: 10px 0;
       opacity: 0;
     }
 
@@ -610,9 +440,6 @@
       transform: rotate(-8deg);
     }
 
-    /* ============================================================
-     SCENE 3: SOLUTION / BRAND REVEAL
-     ============================================================ */
     #scene-solution .forge-glow {
       position: absolute;
       width: 1100px;
@@ -664,7 +491,6 @@
       margin: 0 14px;
     }
 
-    /* Impact flash overlay (used on hammer strike) */
     #impact-flash {
       position: absolute;
       inset: 0;
@@ -675,9 +501,6 @@
       mix-blend-mode: screen;
     }
 
-    /* ============================================================
-     SHARED DEVICE STAGE
-     ============================================================ */
     .device-stage {
       position: relative;
       width: 100%;
@@ -720,9 +543,6 @@
       transform: scale(1.12);
     }
 
-    /* ============================================================
-     PHONE MOCKUP — self-assembling
-     ============================================================ */
     .phone {
       width: 420px;
       height: 860px;
@@ -876,9 +696,6 @@
       transform: translateY(20px) scale(0.9);
     }
 
-    /* ============================================================
-     DESKTOP WINDOW — self-assembling
-     ============================================================ */
     .desktop {
       width: 880px;
       height: 620px;
@@ -1007,9 +824,6 @@
       transform: scaleY(0);
     }
 
-    /* ============================================================
-     BROWSER WINDOW — self-assembling
-     ============================================================ */
     .browser {
       width: 900px;
       background: #0e0e16;
@@ -1181,9 +995,6 @@
       text-transform: uppercase;
     }
 
-    /* ============================================================
-     AI NEURAL NETWORK
-     ============================================================ */
     .ai-stage {
       width: 900px;
       height: 700px;
@@ -1257,9 +1068,6 @@
       color: #fff;
     }
 
-    /* ============================================================
-     SCENE CTA
-     ============================================================ */
     #scene-cta .cta-eyebrow {
       font-family: 'JetBrains Mono', monospace;
       font-weight: 700;
@@ -1356,36 +1164,6 @@
       opacity: 0;
     }
 
-    /* ============================================================
-     REPLAY BUTTON
-     ============================================================ */
-    #replay {
-      position: absolute;
-      bottom: 40px;
-      right: 40px;
-      z-index: 80;
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      color: #fff;
-      width: 70px;
-      height: 70px;
-      border-radius: 50%;
-      cursor: pointer;
-      font-size: 28px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
-      backdrop-filter: blur(10px);
-    }
-
-    #replay:hover {
-      background: rgba(255, 107, 26, 0.3);
-      border-color: #ff6b1a;
-      transform: scale(1.08);
-    }
-
-    /* Transition overlay (whip pan streaks) */
     #whip-overlay {
       position: absolute;
       inset: 0;
@@ -1411,6 +1189,8 @@
 
               <!-- ============ BACKGROUND LAYERS ============ -->
               <div id="bg-gradient" class="bg-layer"></div>
+              <div id="bg-problem" class="bg-layer"></div>
+              <div id="bg-solution" class="bg-layer"></div>
               <div id="bg-mesh" class="bg-layer"></div>
               <div id="bg-rays" class="bg-layer"></div>
               <div id="bg-grid" class="bg-layer"></div>
@@ -1437,11 +1217,17 @@
                 <div class="broken-mockup" id="bm1" style="top: 20%; left: 12%;"></div>
                 <div class="broken-mockup" id="bm2" style="top: 25%; right: 12%;"></div>
                 <div class="broken-mockup" id="bm3" style="bottom: 18%; left: 18%;"></div>
-                <div class="glitch-text" data-text="GENERIC">GENERIC</div>
-                <div class="problem-or">// then</div>
-                <div class="glitch-text" data-text="SLOW.">SLOW.</div>
-                <div class="problem-or">// then</div>
-                <div class="glitch-text" data-text="EXPENSIVE">EXPENSIVE</div>
+
+                <div class="problem-content-wrap">
+                  <div class="glitch-text" id="gt-generic" data-text="STRUGGLING WITH OUTDATED SYSTEMS?">STRUGGLING WITH
+                    OUTDATED SYSTEMS?</div>
+                  <div class="problem-or" id="or-then1">// the problem</div>
+                  <div class="glitch-text" id="gt-slow" data-text="OFF-THE-SHELF TOOLS ARE SLOW &amp; RIGID">
+                    OFF-THE-SHELF TOOLS ARE SLOW &amp; RIGID</div>
+                  <div class="problem-or" id="or-then2">// the result</div>
+                  <div class="glitch-text" id="gt-expensive" data-text="AND COSTING YOU TIME &amp; REVENUE">AND COSTING
+                    YOU TIME &amp; REVENUE</div>
+                </div>
               </div>
 
               <!-- ============ SCENE 3: SOLUTION / BRAND ============ -->
@@ -1535,9 +1321,9 @@
                   </div>
                 </div>
                 <div class="caption-box">
-                  <div class="caption-eyebrow">// 01 — we build</div>
+                  <div class="caption-eyebrow">// 01 — premium app</div>
                   <h2 class="caption-headline" id="capMobile"></h2>
-                  <p class="caption-sub">iOS · Android · Cross-platform · <span class="hl">real users</span></p>
+                  <p class="caption-sub">iOS &amp; Android apps built for real-world growth.</p>
                 </div>
               </div>
 
@@ -1585,9 +1371,9 @@
                   </div>
                 </div>
                 <div class="caption-box">
-                  <div class="caption-eyebrow">// 02 — we build</div>
+                  <div class="caption-eyebrow">// 02 — desktop software</div>
                   <h2 class="caption-headline" id="capDesktop"></h2>
-                  <p class="caption-sub">Windows · Linux · <span class="hl">real tools</span></p>
+                  <p class="caption-sub">Custom software to optimize your business operations.</p>
                 </div>
               </div>
 
@@ -1632,9 +1418,9 @@
                   </div>
                 </div>
                 <div class="caption-box">
-                  <div class="caption-eyebrow">// 03 — we build</div>
+                  <div class="caption-eyebrow">// 03 — cloud platform</div>
                   <h2 class="caption-headline" id="capWeb"></h2>
-                  <p class="caption-sub">Landing · Store · Portal · <span class="hl">convert-ready</span></p>
+                  <p class="caption-sub">Fast, beautiful, and fully custom-coded.</p>
                 </div>
               </div>
 
@@ -1661,9 +1447,9 @@
                   </div>
                 </div>
                 <div class="caption-box">
-                  <div class="caption-eyebrow">// 04 — we build</div>
+                  <div class="caption-eyebrow">// 04 — intelligence</div>
                   <h2 class="caption-headline" id="capAI"></h2>
-                  <p class="caption-sub">Chatbots · Automation · <span class="hl">work smarter</span></p>
+                  <p class="caption-sub">Integrate custom AI models to scale your workflow.</p>
                 </div>
               </div>
 
@@ -1683,7 +1469,7 @@
                 </div>
                 <div class="cta-handle">
                   <span class="arrow">→</span>
-                  <span>DM TO BUILD</span>
+                  <span>START YOUR PROJECT</span>
                 </div>
                 <div class="cta-tag">let's build something</div>
               </div>
@@ -1703,14 +1489,17 @@
 
   <script>
     /* ============================================================
-       Premium Reel — Dynamic Timeline Engine
-       1080 x 1920, GSAP master timeline, ~30s
+       Premium Reel — Dynamic Timeline Engine (Fixed & Stabilized)
        ============================================================ */
 
     gsap.config({ nullTargetWarn: false });
 
-    // Robust environment detection ensuring both programmatic and hash checks are combined safely
+    // Robust environment detection combining programmatic and hash checks safely
     window.renderMode = (window.renderMode === true) || /capture/i.test(location.hash);
+
+    if (window.renderMode) {
+      document.body.classList.add('render-active');
+    }
 
     /* ---------- Stage fit ---------- */
     function fitStage() {
@@ -1732,73 +1521,8 @@
     const camEl = document.getElementById('camera');
     const driftEl = document.getElementById('drift');
     const shakeEl = document.getElementById('shake');
-
-    // Slow continuous drift via sine wave — strictly disabled in render mode for video stability
-    function tickDrift() {
-      if (window.renderMode) {
-        driftEl.style.transform = 'none';
-        return;
-      }
-      const t = (window.masterTL ? window.masterTL.time() : (performance.now() / 1000));
-      const driftT = t * 0.5;
-      const dx = Math.sin(driftT) * 18 + Math.sin(driftT * 1.7) * 6;
-      const dy = Math.cos(driftT * 0.8) * 14 + Math.cos(driftT * 2.3) * 5;
-      const dr = Math.sin(driftT * 0.6) * 0.4;
-      driftEl.style.transform = `translate(${dx}px, ${dy}px) rotate(${dr}deg)`;
-      requestAnimationFrame(tickDrift);
-    }
-    tickDrift();
-
-    // Handheld shake — strictly disabled in render mode for video stability
-    function tickShake() {
-      if (window.renderMode) {
-        shakeEl.style.transform = 'none';
-        return;
-      }
-      const t = (window.masterTL ? window.masterTL.time() : (performance.now() / 1000));
-      const shakeT = t * 20;
-      const sx = (Math.sin(shakeT * 3.1) + Math.sin(shakeT * 7.3)) * 3;
-      const sy = (Math.cos(shakeT * 2.7) + Math.cos(shakeT * 6.1)) * 3;
-      shakeEl.style.transform = `translate(${sx}px, ${sy}px)`;
-      requestAnimationFrame(tickShake);
-    }
-    tickShake();
-
-    // Punch-in helper (animates #camera)
-    function punchIn(tl, scale, time, duration = 0.5, ease = 'power2.out') {
-      tl.to(camEl, { scale, duration, ease }, time);
-    }
-
-    // Whip transition (camera blur + scale + flash scene swap)
-    function whip(tl, time, fromScene, toScene, dir = 'right') {
-      const dur = 0.45;
-      tl.to(camEl, {
-        scale: 1.35, rotation: dir === 'right' ? 4 : -4,
-        filter: 'blur(24px)',
-        duration: dur * 0.5, ease: 'power2.in'
-      }, time);
-      tl.to('#whip-overlay', {
-        opacity: 1, scaleX: 1, duration: dur * 0.3, ease: 'power2.in'
-      }, time);
-      tl.set(fromScene, { opacity: 0 }, time + dur * 0.5);
-      tl.set(toScene, { opacity: 1 }, time + dur * 0.5);
-      tl.to('#whip-overlay', {
-        opacity: 0, scaleX: 0, duration: dur * 0.3, ease: 'power2.out',
-        transformOrigin: 'right center'
-      }, time + dur * 0.5);
-      tl.to(camEl, {
-        scale: 1.0, rotation: 0, filter: 'blur(0px)',
-        duration: dur * 0.5, ease: 'power2.out'
-      }, time + dur * 0.5);
-    }
-
-    // Impact frame — freeze + zoom burst + white flash
-    function impactFrame(tl, time) {
-      tl.to(camEl, { scale: 1.15, duration: 0.08, ease: 'power4.out' }, time);
-      tl.to('#impact-flash', { opacity: 0.85, duration: 0.05 }, time);
-      tl.to('#impact-flash', { opacity: 0, duration: 0.3, ease: 'power2.out' }, time + 0.06);
-      tl.to(camEl, { scale: 1.0, duration: 0.4, ease: 'power2.out' }, time + 0.08);
-    }
+    const glowOrange = document.getElementById('glow-orange');
+    const glowBlue = document.getElementById('glow-blue');
 
     /* ============================================================
        PARTICLE SYSTEM — forge embers + impact sparks
@@ -1884,16 +1608,16 @@
     };
     let lastFrameTime = 0;
 
-    // Render-mode helper: clear sparks, re-spawn all that should exist at time t
+    // Direct and layout-stable frame state calculation hook (CDP-friendly)
     window.renderAtTime = function (t) {
       // Seek the timeline
       window.masterTL.seek(t);
 
-      // Secure physical transforms
+      // Force static camera alignment in render mode to guarantee absolute visual stability
       driftEl.style.transform = 'none';
       shakeEl.style.transform = 'none';
 
-      // Reset sparks
+      // Reset sparks deterministically
       sparks.length = 0;
       window.SPARK_REGISTRY.forEach(b => {
         if (t >= b.t) {
@@ -1916,7 +1640,7 @@
         }
       });
 
-      // Reset embers to their initial state + simulate forward to time t
+      // Reset and simulate embers deterministically
       embers.length = 0;
       const preRng = mulberry32(42);
       for (let i = 0; i < 80; i++) {
@@ -1933,7 +1657,7 @@
         });
       }
 
-      // Spawn embers that should have appeared by time t
+      // Spawn matching embers that should exist at time t
       let spawnRng = mulberry32(7);
       let nextSpawn = 0.09;
       while (nextSpawn < t) {
@@ -1951,7 +1675,7 @@
         nextSpawn += 0.09;
       }
 
-      // Step every ember forward to time t (deterministic)
+      // Forward simulate steps deterministically
       for (let i = embers.length - 1; i >= 0; i--) {
         const e = embers[i];
         const ageAtT = t;
@@ -1964,10 +1688,9 @@
       }
 
       lastFrameTime = t;
-      drawParticlesOnly(t);
+      updateAmbient(t);
     };
 
-    // Standalone draw function (no RAF loop needed in render mode)
     function drawParticlesOnly(t) {
       ctx.clearRect(0, 0, 1080, 1920);
       ctx.globalCompositeOperation = 'screen';
@@ -2006,7 +1729,7 @@
     }
 
     function tickParticles() {
-      if (window.renderMode) return; // Prevent live updates in render mode
+      if (window.renderMode) return;
 
       const nowT = window.masterTL ? window.masterTL.time() : (performance.now() / 1000);
       const dt = Math.max(0.001, nowT - (lastFrameTime || nowT));
@@ -2017,54 +1740,60 @@
         spawnEmber(emberSpawnRng);
       }
 
-      ctx.clearRect(0, 0, 1080, 1920);
-
-      ctx.globalCompositeOperation = 'screen';
-      for (let i = embers.length - 1; i >= 0; i--) {
-        const e = embers[i];
-        e.x += e.vx * dt * 60;
-        e.y += e.vy * dt * 60;
-        e.vy *= 0.998;
-        e.vx += (Math.sin(e.flicker * 7) - 0.5) * 0.05 * dt * 60;
-        e.flicker += 0.15 * dt * 60;
-        e.life -= e.decay * dt * 60;
-        if (e.life <= 0 || e.y < -50) { embers.splice(i, 1); continue; }
-        const flick = 0.7 + Math.sin(e.flicker) * 0.3;
-        ctx.globalAlpha = e.life * flick * 0.8;
-        ctx.fillStyle = `hsl(${e.hue}, 100%, ${55 + e.life * 25}%)`;
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = `hsl(${e.hue}, 100%, 55%)`;
-        ctx.beginPath();
-        ctx.arc(e.x, e.y, e.size, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      for (let i = sparks.length - 1; i >= 0; i--) {
-        const s = sparks[i];
-        const age = nowT - s.spawnT;
-        if (age < 0) { sparks.splice(i, 1); continue; }
-        const steps = age * 60;
-        const xNow = s.x + (s.vx * (1 - Math.pow(0.985, steps)) / 0.015) * (1 / 60);
-        const yNow = s.y + (s.vy * steps / 60) + 0.5 * 0.18 * steps * steps / 60;
-        const lifeNow = 1 - s.decay * steps;
-        if (lifeNow <= 0) { sparks.splice(i, 1); continue; }
-        ctx.globalAlpha = lifeNow;
-        ctx.fillStyle = `hsl(${s.hue}, 100%, ${60 + lifeNow * 25}%)`;
-        ctx.shadowBlur = 14;
-        ctx.shadowColor = `hsl(${s.hue}, 100%, 60%)`;
-        ctx.beginPath();
-        ctx.arc(xNow, yNow, s.size * lifeNow, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      ctx.globalAlpha = 1;
-      ctx.shadowBlur = 0;
-      ctx.globalCompositeOperation = 'source-over';
+      updateAmbient(nowT);
       requestAnimationFrame(tickParticles);
     }
 
     if (!window.renderMode) {
       requestAnimationFrame(tickParticles);
+    }
+
+    // Handles background layout position updates and active animations deterministically
+    function updateAmbient(t) {
+      // 1. Mesh drift simulation
+      const meshT = t * 0.15;
+      const mx = Math.sin(meshT) * -40;
+      const my = Math.cos(meshT * 1.5) * 30;
+      const ms = 1 + Math.sin(meshT * 0.8) * 0.06;
+      document.getElementById('bg-mesh').style.transform = `translate3d(${mx}px, ${my}px, 0) scale(${ms})`;
+
+      // 2. Grid shift simulation (modulo grid pattern size 70px)
+      const gridOffset = (t * 20) % 70;
+      document.getElementById('bg-grid').style.backgroundPosition = `${gridOffset}px ${gridOffset}px`;
+
+      // 3. Rays rotation
+      const rayAngle = (t * 12) % 360;
+      document.getElementById('bg-rays').style.transform = `rotate(${rayAngle}deg)`;
+
+      // 4. Film grain jump simulation (modulo frame tick step index)
+      const grainStep = Math.floor(t * 15) % 4;
+      const gx = (grainStep % 2) * -1.5;
+      const gy = Math.floor(grainStep / 2) * 1.5;
+      document.getElementById('grain').style.transform = `translate3d(${gx}%, ${gy}%, 0)`;
+
+      // 5. Handle physical hand-held jitter and camera drift (disabled in renderMode)
+      if (window.renderMode) {
+        driftEl.style.transform = 'none';
+        shakeEl.style.transform = 'none';
+      } else {
+        const shakeT = t * 18;
+        const sx = (Math.sin(shakeT * 2.8) + Math.cos(shakeT * 5.4)) * 2;
+        const sy = (Math.cos(shakeT * 3.1) + Math.sin(shakeT * 4.9)) * 2;
+        shakeEl.style.transform = `translate3d(${sx}px, ${sy}px, 0)`;
+
+        const driftT = t * 0.4;
+        const dx = Math.sin(driftT * 0.8) * 14;
+        const dy = Math.cos(driftT * 1.2) * 10;
+        const dr = Math.sin(driftT * 0.5) * 0.3;
+        driftEl.style.transform = `translate3d(${dx}px, ${dy}px, 0) rotate(${dr}deg)`;
+      }
+
+      // 6. Glow sphere expansions
+      glowOrange.style.transform = `translate3d(${Math.sin(t * 0.3) * 40}px, ${Math.cos(t * 0.25) * 30}px, 0) scale(${1 + Math.sin(t * 0.2) * 0.08})`;
+      glowBlue.style.transform = `translate3d(${Math.cos(t * 0.28) * -50}px, ${Math.sin(t * 0.22) * 35}px, 0) scale(${1 + Math.cos(t * 0.18) * 0.08})`;
+
+      // 7. Paint canvas rendering
+      drawParticlesOnly(t);
     }
 
     /* ============================================================
@@ -2106,24 +1835,6 @@
         el.appendChild(document.createTextNode(' '));
         return span;
       });
-    }
-    function buildLetters(elId, text) {
-      const el = document.getElementById(elId);
-      if (!el) return [];
-      el.innerHTML = '';
-      const chars = [];
-      for (const c of text) {
-        if (c === ' ') {
-          el.appendChild(document.createTextNode(' '));
-        } else {
-          const span = document.createElement('span');
-          span.className = 'letter';
-          span.textContent = c;
-          el.appendChild(span);
-          chars.push(span);
-        }
-      }
-      return chars;
     }
 
     const capMobile = buildCaption('capMobile', 'MOBILE APPS', []);
@@ -2179,6 +1890,42 @@
       return { nodes: allNodes, conns: allConns };
     })();
 
+    // Punch-in helper (animates #camera)
+    function punchIn(tl, scale, time, duration = 0.5, ease = 'power2.out') {
+      tl.to(camEl, { scale, duration, ease }, time);
+    }
+
+    // Whip transition (camera blur + scale + flash scene swap)
+    function whip(tl, time, fromScene, toScene, dir = 'right') {
+      const dur = 0.45;
+      tl.to(camEl, {
+        scale: 1.35, rotation: dir === 'right' ? 4 : -4,
+        filter: 'blur(24px)',
+        duration: dur * 0.5, ease: 'power2.in'
+      }, time);
+      tl.to('#whip-overlay', {
+        opacity: 1, scaleX: 1, duration: dur * 0.3, ease: 'power2.in'
+      }, time);
+      tl.set(fromScene, { opacity: 0 }, time + dur * 0.5);
+      tl.set(toScene, { opacity: 1 }, time + dur * 0.5);
+      tl.to('#whip-overlay', {
+        opacity: 0, scaleX: 0, duration: dur * 0.3, ease: 'power2.out',
+        transformOrigin: 'right center'
+      }, time + dur * 0.5);
+      tl.to(camEl, {
+        scale: 1.0, rotation: 0, filter: 'blur(0px)',
+        duration: dur * 0.5, ease: 'power2.out'
+      }, time + dur * 0.5);
+    }
+
+    // Impact frame — freeze + zoom burst + white flash
+    function impactFrame(tl, time) {
+      tl.to(camEl, { scale: 1.15, duration: 0.08, ease: 'power4.out' }, time);
+      tl.to('#impact-flash', { opacity: 0.85, duration: 0.05 }, time);
+      tl.to('#impact-flash', { opacity: 0, duration: 0.3, ease: 'power2.out' }, time + 0.06);
+      tl.to(camEl, { scale: 1.0, duration: 0.4, ease: 'power2.out' }, time + 0.08);
+    }
+
     /* ============================================================
        MASTER TIMELINE
        ============================================================ */
@@ -2192,7 +1939,9 @@
       gsap.set('#scene-hook .hook-eyebrow', { opacity: 0, y: -20 });
       gsap.set('#scene-hook .hook-flash', { opacity: 0, scale: 0.5 });
 
-      gsap.set('#bg-gradient', { attr: { class: 'bg-layer' } });
+      gsap.set('#bg-gradient', { opacity: 1 });
+      gsap.set('#bg-problem', { opacity: 0 });
+      gsap.set('#bg-solution', { opacity: 0 });
 
       /* ============================================================
          SCENE 1: HOOK (0s – 2.5s)
@@ -2230,7 +1979,8 @@
          ============================================================ */
       const problemT = 2.95;
 
-      tl.set('#bg-gradient', { attr: { class: 'bg-layer problem-mode' } }, problemT);
+      // Background programmatically controlled with GSAP
+      tl.to('#bg-problem', { opacity: 1, duration: 0.5, ease: 'power2.out' }, problemT);
 
       tl.set('#scene-problem .glitch-text', { opacity: 0 });
       tl.set('#scene-problem .problem-or', { opacity: 0 });
@@ -2242,8 +1992,8 @@
       tl.to('#bm2', { opacity: 0.5, y: 0, rotation: 10, duration: 0.5, ease: 'power2.out' }, problemT + 0.25);
       tl.to('#bm3', { opacity: 0.4, y: 0, rotation: -5, duration: 0.5, ease: 'power2.out' }, problemT + 0.4);
 
-      // "GENERIC" glitch in
-      tl.to('#scene-problem .glitch-text:nth-of-type(1)', {
+      // Unique robust selectors to prevent structure targeting conflicts
+      tl.to('#gt-generic', {
         opacity: 1, duration: 0.15, ease: 'power2.out'
       }, problemT + 0.3);
       window.registerSpark(540, 700, 15, problemT + 0.35);
@@ -2251,13 +2001,11 @@
       punchIn(tl, 1.10, problemT + 0.3, 0.15, 'power4.out');
       punchIn(tl, 1.05, problemT + 0.45, 0.2, 'power2.out');
 
-      // "or"
-      tl.to('#scene-problem .problem-or:nth-of-type(1)', {
+      tl.to('#or-then1', {
         opacity: 1, duration: 0.2
       }, problemT + 0.9);
 
-      // "SLOW."
-      tl.to('#scene-problem .glitch-text:nth-of-type(2)', {
+      tl.to('#gt-slow', {
         opacity: 1, duration: 0.15
       }, problemT + 1.2);
       window.registerSpark(540, 960, 15, problemT + 1.25);
@@ -2265,13 +2013,11 @@
       punchIn(tl, 1.10, problemT + 1.2, 0.15, 'power4.out');
       punchIn(tl, 1.05, problemT + 1.35, 0.2, 'power2.out');
 
-      // "or"
-      tl.to('#scene-problem .problem-or:nth-of-type(2)', {
+      tl.to('#or-then2', {
         opacity: 1, duration: 0.2
       }, problemT + 1.8);
 
-      // "EXPENSIVE"
-      tl.to('#scene-problem .glitch-text:nth-of-type(3)', {
+      tl.to('#gt-expensive', {
         opacity: 1, duration: 0.15
       }, problemT + 2.1);
       window.registerSpark(540, 1220, 25, problemT + 2.15);
@@ -2281,7 +2027,9 @@
 
       // Whip to Solution
       whip(tl, 6.0, '#scene-problem', '#scene-solution', 'left');
-      tl.set('#bg-gradient', { attr: { class: 'bg-layer' } }, 6.45);
+
+      tl.to('#bg-problem', { opacity: 0, duration: 0.5, ease: 'power2.out' }, 6.0);
+      tl.to('#bg-solution', { opacity: 1, duration: 0.5, ease: 'power2.out' }, 6.0);
 
       /* ============================================================
          SCENE 3: SOLUTION / BRAND REVEAL (6.45s – 10.5s)
@@ -2297,12 +2045,10 @@
 
       punchIn(tl, 1.05, solT, 4.0, 'power2.out');
 
-      // Glow builds
       tl.to('#scene-solution .forge-glow', {
         opacity: 1, scale: 1, duration: 0.8, ease: 'power2.out'
       }, solT + 0.1);
 
-      // Icon drops
       tl.to('#scene-solution .anvil-wrap', {
         opacity: 1, scale: 1, rotation: 0,
         duration: 0.5, ease: 'back.out(1.5)'
@@ -2316,20 +2062,17 @@
       tl.call(() => spawnSparkBurst(540, 900, 80), null, solT + 1.1);
       tl.call(() => spawnSparkBurst(540, 900, 40), null, solT + 1.3);
 
-      // Letters reveal one by one
       const letters = document.querySelectorAll('#scene-solution .letter');
       tl.to(letters, {
         opacity: 1, y: 0, scale: 1, rotation: 0,
         duration: 0.4, stagger: 0.08, ease: 'back.out(1.8)'
       }, solT + 1.4);
 
-      // Each letter spawns a small spark
       letters.forEach((l, i) => {
         window.registerSpark(280 + i * 60, 1100, 8, solT + 1.4 + i * 0.08);
         tl.call(() => spawnSparkBurst(280 + i * 60, 1100, 8), null, solT + 1.4 + i * 0.08);
       });
 
-      // Tagline
       tl.to('#scene-solution .brand-tagline', {
         opacity: 1, y: 0, duration: 0.5, ease: 'power2.out'
       }, solT + 2.6);
@@ -2337,7 +2080,6 @@
         opacity: 1, duration: 0.3, stagger: 0.1, ease: 'power2.out'
       }, solT + 2.7);
 
-      // Whip to Mobile
       whip(tl, 10.5, '#scene-solution', '#scene-mobile', 'right');
 
       /* ============================================================
@@ -2358,54 +2100,43 @@
       tl.set('#scene-mobile .caption-eyebrow', { opacity: 0, y: 20 });
       tl.set(capMobile, { opacity: 0, y: 30, scale: 0.7 });
       tl.set('#scene-mobile .caption-sub', { opacity: 0, y: 20 });
-      tl.set('#bg-gradient', { attr: { class: 'bg-layer' } }, mobT);
+
+      tl.to('#bg-solution', { opacity: 0, duration: 0.5, ease: 'power2.out' }, mobT);
 
       punchIn(tl, 1.08, mobT, 3.0, 'power2.out');
 
-      // Chips
       tl.to(chipsM, { opacity: 1, y: 0, duration: 0.35, stagger: 0.07, ease: 'back.out(1.5)' }, mobT + 0.1);
 
-      // Phone frame
       tl.to('#phone', {
         opacity: 1, scale: 1, y: 0, rotation: 0,
         duration: 0.55, ease: 'back.out(1.4)'
       }, mobT + 0.3);
-      // Screen slides up into frame
       tl.to('.phone-screen', { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' }, mobT + 0.6);
 
-      // Header assembles
       tl.to('.phone-header', { opacity: 1, x: 0, duration: 0.3, ease: 'power2.out' }, mobT + 0.85);
       tl.to('.phone-header .avatar', { opacity: 1, scale: 1, duration: 0.3, ease: 'back.out(2)' }, mobT + 1.0);
 
-      // Title
       tl.to('.phone-title', { opacity: 1, y: 0, duration: 0.3, ease: 'power2.out' }, mobT + 1.05);
 
-      // Cards stack in
       tl.to('.phone-card', {
         opacity: 1, y: 0, duration: 0.35, stagger: 0.12, ease: 'back.out(1.3)'
       }, mobT + 1.2);
 
-      // CTA pops
       tl.to('.phone-cta', { opacity: 1, y: 0, scale: 1, duration: 0.4, ease: 'back.out(1.8)' }, mobT + 1.7);
 
-      // Notification slides in
       tl.to('#phoneNotif', {
         opacity: 1, x: 0, duration: 0.35, ease: 'back.out(1.5)'
       }, mobT + 2.0);
       window.registerSpark(540, 1500, 12, mobT + 2.0);
       tl.call(() => spawnSparkBurst(540, 1500, 12), null, mobT + 2.0);
 
-      // Caption eyebrow
       tl.to('#scene-mobile .caption-eyebrow', { opacity: 1, y: 0, duration: 0.35 }, mobT + 0.4);
-      // Caption letters
       tl.to(capMobile, {
         opacity: 1, y: 0, scale: 1,
         duration: 0.4, stagger: 0.07, ease: 'back.out(1.5)'
       }, mobT + 0.7);
-      // Caption sub
       tl.to('#scene-mobile .caption-sub', { opacity: 1, y: 0, duration: 0.4 }, mobT + 1.4);
 
-      // Whip to Desktop
       whip(tl, 14.0, '#scene-mobile', '#scene-desktop', 'right');
 
       /* ============================================================
@@ -2430,37 +2161,30 @@
 
       tl.to(chipsD, { opacity: 1, y: 0, duration: 0.35, stagger: 0.07, ease: 'back.out(1.5)' }, dskT + 0.1);
 
-      // Desktop window expands
       tl.to('#desktop', {
         opacity: 1, scale: 1, rotationY: 0,
         duration: 0.55, ease: 'back.out(1.3)'
       }, dskT + 0.3);
 
-      // Titlebar lights
       tl.to('.desktop-titlebar .light', {
         opacity: 1, scale: 1, duration: 0.25, stagger: 0.08, ease: 'back.out(2)'
       }, dskT + 0.6);
       tl.to('.desktop-titlebar .title', { opacity: 1, duration: 0.3 }, dskT + 0.85);
 
-      // Sidebar items
       tl.to('.desktop-sidebar .side-item', {
         opacity: 1, x: 0, duration: 0.3, stagger: 0.07, ease: 'power2.out'
       }, dskT + 0.7);
 
-      // Content title
       tl.to('.desktop-content .d-title', { opacity: 1, y: 0, duration: 0.3 }, dskT + 0.95);
 
-      // Cards flip in
       tl.to('.desktop-content .d-card', {
         opacity: 1, rotationY: 0, duration: 0.45, stagger: 0.1, ease: 'back.out(1.4)'
       }, dskT + 1.1);
 
-      // Chart bars rise
       tl.to('.desktop-content .bar', {
         scaleY: 1, duration: 0.5, stagger: 0.07, ease: 'power2.out'
       }, dskT + 1.5);
 
-      // Caption
       tl.to('#scene-desktop .caption-eyebrow', { opacity: 1, y: 0, duration: 0.35 }, dskT + 0.4);
       tl.to(capDesktop, {
         opacity: 1, y: 0, scale: 1,
@@ -2468,7 +2192,6 @@
       }, dskT + 0.7);
       tl.to('#scene-desktop .caption-sub', { opacity: 1, y: 0, duration: 0.4 }, dskT + 1.4);
 
-      // Whip to Web
       whip(tl, 17.5, '#scene-desktop', '#scene-web', 'right');
 
       /* ============================================================
@@ -2493,34 +2216,27 @@
 
       tl.to(chipsW, { opacity: 1, y: 0, duration: 0.35, stagger: 0.07, ease: 'back.out(1.5)' }, webT + 0.1);
 
-      // Browser scales in
       tl.to('#browser', {
         opacity: 1, scale: 1, y: 0, duration: 0.55, ease: 'back.out(1.3)'
       }, webT + 0.3);
 
-      // Browser bar
       tl.to('.browser-bar .b-light', {
         opacity: 1, scale: 1, duration: 0.25, stagger: 0.08, ease: 'back.out(2)'
       }, webT + 0.6);
       tl.to('.browser-bar .url', { opacity: 1, y: 0, duration: 0.3 }, webT + 0.85);
 
-      // Hero — eyebrow
       tl.to('.browser-hero .bh-eyebrow', { opacity: 1, x: 0, duration: 0.3 }, webT + 1.0);
-      // Hero — title words
       tl.to('.browser-hero .bw', {
         opacity: 1, y: 0, duration: 0.4, stagger: 0.1, ease: 'back.out(1.4)'
       }, webT + 1.15);
-      // Hero — CTA
       tl.to('.browser-hero .bh-cta', {
         opacity: 1, scale: 1, duration: 0.4, ease: 'back.out(1.8)'
       }, webT + 1.65);
 
-      // Stats strip flips in
       tl.to('.browser-strip .bs-cell', {
         opacity: 1, rotationX: 0, duration: 0.4, stagger: 0.12, ease: 'back.out(1.4)'
       }, webT + 1.85);
 
-      // Caption
       tl.to('#scene-web .caption-eyebrow', { opacity: 1, y: 0, duration: 0.35 }, webT + 0.4);
       tl.to(capWeb, {
         opacity: 1, y: 0, scale: 1,
@@ -2528,7 +2244,6 @@
       }, webT + 0.7);
       tl.to('#scene-web .caption-sub', { opacity: 1, y: 0, duration: 0.4 }, webT + 1.4);
 
-      // Whip to AI
       whip(tl, 21.0, '#scene-web', '#scene-ai', 'right');
 
       /* ============================================================
@@ -2550,20 +2265,16 @@
 
       tl.to(chipsA, { opacity: 1, y: 0, duration: 0.35, stagger: 0.07, ease: 'back.out(1.5)' }, aiT + 0.1);
 
-      // AI stage fades in
       tl.to('#aiStage', { opacity: 1, scale: 1, duration: 0.5, ease: 'back.out(1.3)' }, aiT + 0.3);
 
-      // Code block appears
       tl.to('#codeBlock', { opacity: 0.9, x: 0, duration: 0.4, ease: 'power2.out' }, aiT + 0.5);
       tl.to('#codeBlock', { opacity: 0, duration: 0.3 }, aiT + 1.5);
 
-      // Connections draw themselves
       tl.to(net.conns.map(c => c.el), {
         strokeDashoffset: 0, duration: 0.6,
         stagger: { each: 0.008, from: 'random' }, ease: 'power2.out'
       }, aiT + 0.7);
 
-      // Nodes light up layer by layer
       [0, 1, 2, 3].forEach(li => {
         const layerNodes = net.nodes.filter(n => n.layer === li).map(n => n.el);
         tl.to(layerNodes, {
@@ -2575,7 +2286,6 @@
         }, aiT + 1.1 + li * 0.25);
       });
 
-      // Pulses traveling
       for (let p = 0; p < 5; p++) {
         const startNode = net.nodes.filter(n => n.layer === 0)[p % 4];
         const path = [
@@ -2611,7 +2321,6 @@
       window.registerSpark(540, 1100, 25, aiT + 2.5);
       tl.call(() => spawnSparkBurst(540, 1100, 25), null, aiT + 2.5);
 
-      // Caption
       tl.to('#scene-ai .caption-eyebrow', { opacity: 1, y: 0, duration: 0.35 }, aiT + 0.4);
       tl.to(capAI, {
         opacity: 1, y: 0, scale: 1,
@@ -2619,7 +2328,6 @@
       }, aiT + 0.7);
       tl.to('#scene-ai .caption-sub', { opacity: 1, y: 0, duration: 0.4 }, aiT + 1.4);
 
-      // Whip to CTA
       whip(tl, 24.5, '#scene-ai', '#scene-cta', 'right');
 
       /* ============================================================
@@ -2638,7 +2346,6 @@
 
       tl.to('#scene-cta .cta-eyebrow', { opacity: 1, y: 0, duration: 0.4 }, ctaT + 0.1);
 
-      // Headline words
       tl.to('#scene-cta .word', {
         opacity: 1, y: 0, rotationX: 0,
         duration: 0.55, stagger: 0.13, ease: 'back.out(1.4)'
@@ -2648,7 +2355,6 @@
       tl.call(() => spawnSparkBurst(540, 900, 50), null, ctaT + 1.5);
       tl.call(() => spawnSparkBurst(540, 900, 35), null, ctaT + 1.8);
 
-      // Services check in one by one
       const services = document.querySelectorAll('#scene-cta .cta-service');
       services.forEach((svc, i) => {
         tl.to(svc, { opacity: 1, y: 0, duration: 0.35, ease: 'back.out(1.4)' }, ctaT + 1.6 + i * 0.25);
@@ -2659,7 +2365,6 @@
         tl.call(() => svc.classList.add('done'), null, ctaT + 1.75 + i * 0.25);
       });
 
-      // Handle slides in
       tl.to('#scene-cta .cta-handle', {
         opacity: 1, y: 0, scale: 1,
         duration: 0.6, ease: 'back.out(1.6)'
@@ -2667,15 +2372,12 @@
       window.registerSpark(540, 1400, 40, ctaT + 3.0);
       tl.call(() => spawnSparkBurst(540, 1400, 40), null, ctaT + 3.0);
 
-      // Tag
       tl.to('#scene-cta .cta-tag', { opacity: 1, duration: 0.5 }, ctaT + 3.5);
 
-      // Handle pulses
       tl.to('#scene-cta .cta-handle', {
         scale: 1.05, duration: 0.5, yoyo: true, repeat: 3, ease: 'sine.inOut'
       }, ctaT + 3.7);
 
-      // Final hold with subtle drift
       tl.to({}, { duration: 1.5 }, ctaT + 4.5);
 
       return tl;
@@ -2683,26 +2385,6 @@
 
     let masterTL = buildTimeline();
     window.masterTL = masterTL;
-
-    // Handle physical transforms inside an ambient update wrapper
-    function updateAmbient(t) {
-      if (window.renderMode) {
-        driftEl.style.transform = 'none';
-        shakeEl.style.transform = 'none';
-        return;
-      }
-
-      const shakeT = t * 18;
-      const sx = (Math.sin(shakeT * 2.8) + Math.cos(shakeT * 5.4)) * 2;
-      const sy = (Math.cos(shakeT * 3.1) + Math.sin(shakeT * 4.9)) * 2;
-      shakeEl.style.transform = `translate3d(${sx}px, ${sy}px, 0)`;
-
-      const driftT = t * 0.4;
-      const dx = Math.sin(driftT * 0.8) * 14;
-      const dy = Math.cos(driftT * 1.2) * 10;
-      const dr = Math.sin(driftT * 0.5) * 0.3;
-      driftEl.style.transform = `translate3d(${dx}px, ${dy}px, 0) rotate(${dr}deg)`;
-    }
 
     if (window.renderMode) {
       masterTL.pause(0);
