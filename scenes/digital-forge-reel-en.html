@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Premium Showcase</title>
+  <title>Premium Showcase — FORGE.OS</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
@@ -67,6 +67,70 @@
       overflow: hidden;
     }
 
+    /* ============================================================
+       APP HEADER / WATERMARK / STATUS CONTROLS
+       ============================================================ */
+    #app-header {
+      position: absolute;
+      top: 60px;
+      left: 80px;
+      right: 80px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 100;
+    }
+
+    .brand-logo-wrap {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .brand-logo-icon {
+      width: 44px;
+      height: 44px;
+      border: 3px solid #ff6b1a;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: 24px;
+      color: #ffb800;
+      background: rgba(10, 10, 16, 0.8);
+      box-shadow: 0 0 20px rgba(255, 107, 26, 0.35);
+    }
+
+    .brand-logo-text {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: 28px;
+      letter-spacing: 2px;
+      color: #fff;
+    }
+
+    .system-status {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 20px;
+      color: rgba(255, 255, 255, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .system-status .pulse-dot {
+      width: 10px;
+      height: 100%;
+      border-radius: 50%;
+      background: #ff6b1a;
+      box-shadow: 0 0 10px #ff6b1a;
+    }
+
+    /* ============================================================
+       BACKGROUND LAYERS
+       ============================================================ */
     .bg-layer {
       position: absolute;
       inset: -10%;
@@ -160,6 +224,100 @@
       mix-blend-mode: overlay;
     }
 
+    /* ============================================================
+       APPLICATION INTERFACE (FORGE HEADER / SERVICE TABS)
+       ============================================================ */
+    #app-navigation {
+      position: absolute;
+      top: 150px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 160px);
+      height: 90px;
+      background: rgba(10, 10, 18, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 0 16px;
+      z-index: 100;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+      opacity: 0;
+    }
+
+    .nav-tab {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      font-size: 20px;
+      padding: 14px 28px;
+      border-radius: 12px;
+      color: rgba(255, 255, 255, 0.45);
+      border: 1px solid transparent;
+      transition: all 0.3s ease;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .nav-tab.active {
+      background: linear-gradient(135deg, #ff6b1a, #ffb800);
+      color: #0a0a10;
+      box-shadow: 0 10px 30px rgba(255, 107, 26, 0.45);
+      transform: scale(1.05);
+    }
+
+    /* ============================================================
+       TELEMETRY SYSTEM WIDGET
+       ============================================================ */
+    #telemetry-widget {
+      position: absolute;
+      bottom: 60px;
+      left: 80px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 16px;
+      background: rgba(10, 10, 18, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 20px 30px;
+      border-radius: 16px;
+      z-index: 100;
+      backdrop-filter: blur(15px);
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+      opacity: 0;
+    }
+
+    .tel-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 40px;
+    }
+
+    .tel-label {
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    .tel-val {
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .tel-val.glow-orange {
+      color: #ff6b1a;
+      text-shadow: 0 0 10px rgba(255, 107, 26, 0.6);
+    }
+
+    .tel-val.glow-red {
+      color: #ff1e3c;
+      text-shadow: 0 0 10px rgba(255, 30, 60, 0.6);
+    }
+
+    /* ============================================================
+       SCENE BASE CONTAINER
+       ============================================================ */
     .scene {
       position: absolute;
       inset: 0;
@@ -258,11 +416,6 @@
       opacity: 0;
     }
 
-    .caption-sub .hl {
-      color: #ffb800;
-      font-weight: 800;
-    }
-
     .cap-word {
       display: inline-block;
       opacity: 0;
@@ -270,11 +423,9 @@
       margin-right: 0.18em;
     }
 
-    .cap-word.hot {
-      color: #ffb800;
-      font-weight: 900;
-    }
-
+    /* ============================================================
+       SCENE 1: HOOK
+       ============================================================ */
     #scene-hook .hook-eyebrow {
       font-family: 'JetBrains Mono', monospace;
       font-weight: 700;
@@ -313,35 +464,54 @@
       border-radius: 40px;
     }
 
+    /* ============================================================
+       SCENE 2: PROBLEM (STABILIZED LAYOUT SYSTEM)
+       ============================================================ */
     #scene-problem {
       background: radial-gradient(ellipse at center, rgba(255, 30, 60, 0.15) 0%, transparent 70%);
     }
 
-    .problem-content-wrap {
+    .problem-sequence-container {
+      position: relative;
+      width: 100%;
+      height: 800px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .problem-step {
+      position: absolute;
+      width: 100%;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      z-index: 5;
       text-align: center;
-      width: 100%;
-      max-width: 960px;
-      padding: 0 40px;
+      opacity: 0;
+      transform: translateY(50px);
+    }
+
+    .problem-eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      font-size: 38px;
+      color: rgba(255, 255, 255, 0.4);
+      letter-spacing: 8px;
+      margin-bottom: 30px;
     }
 
     .glitch-text {
       position: relative;
       font-family: 'Inter', sans-serif;
       font-weight: 900;
-      font-size: 64px;
-      letter-spacing: -1px;
+      font-size: 78px;
+      letter-spacing: -2px;
       line-height: 1.15;
       color: #fff;
       text-align: center;
-      opacity: 0;
-      margin: 18px 0;
       width: 100%;
-      max-width: 960px;
+      max-width: 900px;
       padding: 0 30px;
       box-sizing: border-box;
       word-wrap: break-word;
@@ -357,35 +527,30 @@
       right: 0;
       bottom: 0;
       text-align: center;
+      color: #fff;
+      background: transparent;
+      overflow: hidden;
     }
 
     .glitch-text::before {
       color: #ff0040;
       z-index: -1;
+      transform: translate(-4px, 0);
     }
 
     .glitch-text::after {
       color: #00e5ff;
       z-index: -2;
-    }
-
-    #scene-problem .problem-or {
-      font-family: 'JetBrains Mono', monospace;
-      font-weight: 700;
-      font-size: 38px;
-      color: rgba(255, 255, 255, 0.4);
-      letter-spacing: 8px;
-      margin: 10px 0;
-      opacity: 0;
+      transform: translate(4px, 0);
     }
 
     #scene-problem .broken-mockup {
       position: absolute;
-      width: 200px;
-      height: 320px;
+      width: 220px;
+      height: 350px;
       background: #1a1a2a;
       border: 2px solid rgba(255, 30, 60, 0.4);
-      border-radius: 20px;
+      border-radius: 24px;
       opacity: 0;
       box-shadow: 0 0 40px rgba(255, 30, 60, 0.3);
     }
@@ -402,6 +567,9 @@
       transform: rotate(-8deg);
     }
 
+    /* ============================================================
+       SCENE 3: SOLUTION / BRAND
+       ============================================================ */
     #scene-solution .forge-glow {
       position: absolute;
       width: 1100px;
@@ -455,6 +623,9 @@
       mix-blend-mode: screen;
     }
 
+    /* ============================================================
+       DEVICE SIMULATOR STAGE
+       ============================================================ */
     .device-stage {
       position: relative;
       width: 100%;
@@ -463,40 +634,12 @@
       justify-content: center;
       align-items: center;
       margin-bottom: 40px;
+      margin-top: 80px;
     }
 
-    .service-icon-row {
-      position: absolute;
-      top: 180px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      gap: 20px;
-      z-index: 20;
-    }
-
-    .service-icon-chip {
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      backdrop-filter: blur(10px);
-      padding: 16px 28px;
-      border-radius: 100px;
-      font-family: 'JetBrains Mono', monospace;
-      font-weight: 700;
-      font-size: 22px;
-      color: rgba(255, 255, 255, 0.45);
-      letter-spacing: 2px;
-      text-transform: uppercase;
-    }
-
-    .service-icon-chip.active {
-      background: linear-gradient(135deg, #ff6b1a, #ffb800);
-      color: #0a0a10;
-      border-color: transparent;
-      box-shadow: 0 12px 40px rgba(255, 107, 26, 0.55);
-      transform: scale(1.12);
-    }
-
+    /* ============================================================
+       SIMULATOR: MOBILE APP
+       ============================================================ */
     .phone {
       width: 420px;
       height: 860px;
@@ -648,8 +791,12 @@
       font-size: 24px;
       opacity: 0;
       transform: translateY(20px) scale(0.9);
+      cursor: pointer;
     }
 
+    /* ============================================================
+       SIMULATOR: DESKTOP APPS
+       ============================================================ */
     .desktop {
       width: 880px;
       height: 620px;
@@ -778,6 +925,9 @@
       transform: scaleY(0);
     }
 
+    /* ============================================================
+       SIMULATOR: WEBSITES
+       ============================================================ */
     .browser {
       width: 900px;
       background: #0e0e16;
@@ -949,6 +1099,9 @@
       text-transform: uppercase;
     }
 
+    /* ============================================================
+       SIMULATOR: AI MODELS
+       ============================================================ */
     .ai-stage {
       width: 900px;
       height: 700px;
@@ -1022,6 +1175,9 @@
       color: #fff;
     }
 
+    /* ============================================================
+       SCENE 8: CTA
+       ============================================================ */
     #scene-cta .cta-eyebrow {
       font-family: 'JetBrains Mono', monospace;
       font-weight: 700;
@@ -1117,6 +1273,9 @@
       opacity: 0;
     }
 
+    /* ============================================================
+       TRANSITION OVERLAYS
+       ============================================================ */
     #whip-overlay {
       position: absolute;
       inset: 0;
@@ -1127,6 +1286,18 @@
         linear-gradient(90deg, transparent 0%, rgba(255, 184, 0, 0.4) 50%, transparent 100%);
       transform: scaleX(0);
       transform-origin: left center;
+    }
+
+    /* Simulated Click Cursor */
+    #cursor {
+      position: absolute;
+      width: 48px;
+      height: 48px;
+      background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='white'><path d='M4.5 2v17.5l5.3-5.3 4.2 8.5 3.5-1.8-4.2-8.5 7.7-.3z'/></svg>") no-repeat;
+      pointer-events: none;
+      z-index: 999;
+      opacity: 0;
+      transform: translate(0, 0);
     }
   </style>
 </head>
@@ -1139,6 +1310,45 @@
         <div id="drift">
           <div id="shake">
             <div id="stage">
+
+              <!-- ============ COMPONENT: APP NAV HEADER ============ -->
+              <div id="app-header">
+                <div class="brand-logo-wrap">
+                  <div class="brand-logo-icon">▲</div>
+                  <div class="brand-logo-text">FORGE.OS</div>
+                </div>
+                <div class="system-status">
+                  <div class="pulse-dot"></div>
+                  <span>LIVE SHOWCASE</span>
+                </div>
+              </div>
+
+              <!-- ============ COMPONENT: WEB NAVIGATION TABS ============ -->
+              <div id="app-navigation">
+                <div class="nav-tab" id="tab-mobile">MOBILE</div>
+                <div class="nav-tab" id="tab-desktop">DESKTOP</div>
+                <div class="nav-tab" id="tab-web">WEB DEV</div>
+                <div class="nav-tab" id="tab-ai">CORE AI</div>
+              </div>
+
+              <!-- ============ COMPONENT: SYSTEM TELEMETRY ============ -->
+              <div id="telemetry-widget">
+                <div class="tel-row">
+                  <span class="tel-label">PIPELINE RATE</span>
+                  <span class="tel-val" id="tel-fps">60 FPS</span>
+                </div>
+                <div class="tel-row">
+                  <span class="tel-label">PROCESS_SPEED</span>
+                  <span class="tel-val glow-orange" id="tel-speed">1.00x</span>
+                </div>
+                <div class="tel-row">
+                  <span class="tel-label">GPU_ACCEL</span>
+                  <span class="tel-val glow-orange">ACTIVE</span>
+                </div>
+              </div>
+
+              <!-- ============ MOCK CURSOR FOR SIMULATIONS ============ -->
+              <div id="cursor"></div>
 
               <!-- ============ BACKGROUND LAYERS ============ -->
               <div id="bg-gradient" class="bg-layer"></div>
@@ -1165,21 +1375,31 @@
                 </h1>
               </div>
 
-              <!-- ============ SCENE 2: PROBLEM ============ -->
+              <!-- ============ SCENE 2: PROBLEM (STABILIZED SYSTEM) ============ -->
               <div class="scene" id="scene-problem">
                 <div class="broken-mockup" id="bm1" style="top: 20%; left: 12%;"></div>
                 <div class="broken-mockup" id="bm2" style="top: 25%; right: 12%;"></div>
                 <div class="broken-mockup" id="bm3" style="bottom: 18%; left: 18%;"></div>
 
-                <div class="problem-content-wrap">
-                  <div class="glitch-text" id="gt-generic" data-text="STRUGGLING WITH OUTDATED SYSTEMS?">STRUGGLING WITH
-                    OUTDATED SYSTEMS?</div>
-                  <div class="problem-or" id="or-then1">// the problem</div>
-                  <div class="glitch-text" id="gt-slow" data-text="OFF-THE-SHELF TOOLS ARE SLOW &amp; RIGID">
-                    OFF-THE-SHELF TOOLS ARE SLOW &amp; RIGID</div>
-                  <div class="problem-or" id="or-then2">// the result</div>
-                  <div class="glitch-text" id="gt-expensive" data-text="AND COSTING YOU TIME &amp; REVENUE">AND COSTING
-                    YOU TIME &amp; REVENUE</div>
+                <div class="problem-sequence-container">
+                  <!-- Segment 1 -->
+                  <div class="problem-step" id="p-step-1">
+                    <div class="problem-eyebrow">// the diagnostic</div>
+                    <div class="glitch-text" data-text="STRUGGLING WITH OUTDATED SYSTEMS?">STRUGGLING WITH OUTDATED
+                      SYSTEMS?</div>
+                  </div>
+                  <!-- Segment 2 -->
+                  <div class="problem-step" id="p-step-2">
+                    <div class="problem-eyebrow">// the bottleneck</div>
+                    <div class="glitch-text" data-text="OFF-THE-SHELF TOOLS ARE SLOW &amp; RIGID">OFF-THE-SHELF TOOLS
+                      ARE SLOW &amp; RIGID</div>
+                  </div>
+                  <!-- Segment 3 -->
+                  <div class="problem-step" id="p-step-3">
+                    <div class="problem-eyebrow">// the damage</div>
+                    <div class="glitch-text" data-text="AND COSTING YOU TIME &amp; REVENUE">AND COSTING YOU TIME &amp;
+                      REVENUE</div>
+                  </div>
                 </div>
               </div>
 
@@ -1200,16 +1420,11 @@
 
               <!-- ============ SCENE 4: MOBILE APPS ============ -->
               <div class="scene" id="scene-mobile">
-                <div class="service-icon-row" id="chipsMobile">
-                  <div class="service-icon-chip">DESKTOP</div>
-                  <div class="service-icon-chip">WEB</div>
-                  <div class="service-icon-chip">AI</div>
-                </div>
                 <div class="device-stage">
                   <div class="phone" id="phone">
                     <div class="phone-notification" id="phoneNotif">
                       <div class="nt-title">NEW ORDER</div>
-                      <div class="nt-body">You just got paid $42</div>
+                      <div class="nt-body">You just received a payment of $42.00</div>
                     </div>
                     <div class="phone-screen">
                       <div class="phone-header">
@@ -1238,24 +1453,19 @@
                           <div class="line2"></div>
                         </div>
                       </div>
-                      <div class="phone-cta">ORDER NOW</div>
+                      <div class="phone-cta" id="phone-btn">ORDER NOW</div>
                     </div>
                   </div>
                 </div>
                 <div class="caption-box">
                   <div class="caption-eyebrow">// 01 — premium app</div>
                   <h2 class="caption-headline" id="capMobile"></h2>
-                  <p class="caption-sub">iOS &amp; Android apps built for real-world growth.</p>
+                  <p class="caption-sub">iOS &amp; Android apps engineered for real-world conversion.</p>
                 </div>
               </div>
 
               <!-- ============ SCENE 5: DESKTOP APPS ============ -->
               <div class="scene" id="scene-desktop">
-                <div class="service-icon-row" id="chipsDesktop">
-                  <div class="service-icon-chip">MOBILE</div>
-                  <div class="service-icon-chip">WEB</div>
-                  <div class="service-icon-chip">AI</div>
-                </div>
                 <div class="device-stage">
                   <div class="desktop" id="desktop">
                     <div class="desktop-titlebar">
@@ -1266,11 +1476,11 @@
                     </div>
                     <div class="desktop-body">
                       <div class="desktop-sidebar">
-                        <div class="side-item active"></div>
-                        <div class="side-item short"></div>
-                        <div class="side-item"></div>
-                        <div class="side-item short"></div>
-                        <div class="side-item"></div>
+                        <div class="side-item active" id="side-1"></div>
+                        <div class="side-item short" id="side-2"></div>
+                        <div class="side-item" id="side-3"></div>
+                        <div class="side-item short" id="side-4"></div>
+                        <div class="side-item" id="side-5"></div>
                       </div>
                       <div class="desktop-content">
                         <div class="d-title"></div>
@@ -1295,17 +1505,12 @@
                 <div class="caption-box">
                   <div class="caption-eyebrow">// 02 — desktop software</div>
                   <h2 class="caption-headline" id="capDesktop"></h2>
-                  <p class="caption-sub">Custom software to optimize your business operations.</p>
+                  <p class="caption-sub">Custom native software to optimize your business operations.</p>
                 </div>
               </div>
 
               <!-- ============ SCENE 6: WEBSITES ============ -->
               <div class="scene" id="scene-web">
-                <div class="service-icon-row" id="chipsWeb">
-                  <div class="service-icon-chip">MOBILE</div>
-                  <div class="service-icon-chip">DESKTOP</div>
-                  <div class="service-icon-chip">AI</div>
-                </div>
                 <div class="device-stage" style="height: 800px;">
                   <div class="browser" id="browser">
                     <div class="browser-bar">
@@ -1315,25 +1520,25 @@
                       <div class="url"><span class="lock">🔒</span> yourbrand.com</div>
                     </div>
                     <div class="browser-hero">
-                      <div class="bh-eyebrow">// your brand</div>
+                      <div class="bh-eyebrow">// your platform</div>
                       <div class="bh-title">
                         <span class="bw">Built</span>
                         <span class="bw">to</span>
                         <span class="bw accent">Convert.</span>
                       </div>
-                      <div class="bh-cta">Start Now →</div>
+                      <div class="bh-cta" id="web-btn">Start Now →</div>
                     </div>
                     <div class="browser-strip">
                       <div class="bs-cell">
-                        <div class="bs-num">10k+</div>
+                        <div class="bs-num" id="stat-val-1">0</div>
                         <div class="bs-label">Visitors</div>
                       </div>
                       <div class="bs-cell">
-                        <div class="bs-num">4.9★</div>
+                        <div class="bs-num" id="stat-val-2">0</div>
                         <div class="bs-label">Rating</div>
                       </div>
                       <div class="bs-cell">
-                        <div class="bs-num">98%</div>
+                        <div class="bs-num" id="stat-val-3">0</div>
                         <div class="bs-label">Uptime</div>
                       </div>
                     </div>
@@ -1342,17 +1547,12 @@
                 <div class="caption-box">
                   <div class="caption-eyebrow">// 03 — cloud platform</div>
                   <h2 class="caption-headline" id="capWeb"></h2>
-                  <p class="caption-sub">Fast, beautiful, and fully custom-coded.</p>
+                  <p class="caption-sub">Superfast, responsive, and cleanly custom-coded.</p>
                 </div>
               </div>
 
               <!-- ============ SCENE 7: AI MODELS ============ -->
               <div class="scene" id="scene-ai">
-                <div class="service-icon-row" id="chipsAI">
-                  <div class="service-icon-chip">MOBILE</div>
-                  <div class="service-icon-chip">DESKTOP</div>
-                  <div class="service-icon-chip">WEB</div>
-                </div>
                 <div class="device-stage" style="height: 800px;">
                   <div class="ai-stage" id="aiStage">
                     <svg viewBox="0 0 900 700" preserveAspectRatio="xMidYMid meet">
@@ -1371,7 +1571,7 @@
                 <div class="caption-box">
                   <div class="caption-eyebrow">// 04 — intelligence</div>
                   <h2 class="caption-headline" id="capAI"></h2>
-                  <p class="caption-sub">Integrate custom AI models to scale your workflow.</p>
+                  <p class="caption-sub">Implement advanced custom AI integration to automate your pipeline.</p>
                 </div>
               </div>
 
@@ -1393,7 +1593,7 @@
                   <span class="arrow">→</span>
                   <span>START YOUR PROJECT</span>
                 </div>
-                <div class="cta-tag">let's build something</div>
+                <div class="cta-tag">let's build software built for your business</div>
               </div>
 
               <!-- ============ OVERLAYS ============ -->
@@ -1438,28 +1638,29 @@
     fitStage();
 
     /* ============================================================
-       STABILIZED CAMERA SYSTEM (drift & shake disabled)
+       CAMERA SYSTEMS (drift & shake cleared for stability)
        ============================================================ */
     const camEl = document.getElementById('camera');
     const driftEl = document.getElementById('drift');
     const shakeEl = document.getElementById('shake');
 
     function tickDrift() {
-      driftEl.style.transform = 'none'; // Stable camera alignment
+      driftEl.style.transform = 'none';
       if (!window.renderMode) requestAnimationFrame(tickDrift);
     }
     tickDrift();
 
     function tickShake() {
-      shakeEl.style.transform = 'none'; // Stable camera alignment
+      shakeEl.style.transform = 'none';
       if (!window.renderMode) requestAnimationFrame(tickShake);
     }
     tickShake();
 
     function punchIn(tl, scale, time, duration = 0.5, ease = 'power2.out') {
-      tl.to(camEl, { scale: 1.0, duration, ease }, time); // Stable camera scale bounds
+      tl.to(camEl, { scale: 1.0, duration, ease }, time);
     }
 
+    /* WHIP SCENE TRANSITION */
     function whip(tl, time, fromScene, toScene, dir = 'right') {
       const dur = 0.45;
       tl.to(camEl, {
@@ -1487,8 +1688,49 @@
       tl.to('#impact-flash', { opacity: 0, duration: 0.3, ease: 'power2.out' }, time + 0.06);
     }
 
+    /* TAB SELECTION SYSTEM ANIMATOR */
+    function updateHeaderTabs(tl, activeId, time) {
+      const tabs = ['#tab-mobile', '#tab-desktop', '#tab-web', '#tab-ai'];
+      tabs.forEach(tabSelector => {
+        if (tabIdMatches(tabSelector, activeId)) {
+          tl.to(tabSelector, {
+            color: '#0a0a10',
+            background: 'linear-gradient(135deg, #ff6b1a, #ffb800)',
+            borderColor: 'transparent',
+            scale: 1.08,
+            boxShadow: '0 10px 25px rgba(255, 107, 26, 0.45)',
+            duration: 0.3,
+            ease: 'power2.out'
+          }, time);
+        } else {
+          tl.to(tabSelector, {
+            color: 'rgba(255, 255, 255, 0.45)',
+            background: 'rgba(10, 10, 18, 0.4)',
+            borderColor: 'rgba(255, 255, 255, 0.08)',
+            scale: 1.0,
+            boxShadow: 'none',
+            duration: 0.3,
+            ease: 'power2.out'
+          }, time);
+        }
+      });
+    }
+
+    function tabIdMatches(selector, rawId) {
+      return selector.includes(rawId);
+    }
+
+    /* DYNAMIC TELEMETRY SPEED PANEL */
+    function setTelemetryProcessSpeed(tl, speedStr, glowClass, time) {
+      const speedVal = document.getElementById('tel-speed');
+      tl.call(() => {
+        speedVal.textContent = speedStr;
+        speedVal.className = 'tel-val ' + glowClass;
+      }, null, time);
+    }
+
     /* ============================================================
-       PARTICLE SYSTEM
+       PARTICLE GENERATION SYSTEMS
        ============================================================ */
     const canvas = document.getElementById('sparks-canvas');
     const ctx = canvas.getContext('2d');
@@ -1758,10 +2000,10 @@
       });
     }
 
-    const capMobile = buildCaption('capMobile', 'MOBILE APPS', []);
-    const capDesktop = buildCaption('capDesktop', 'DESKTOP APPS', []);
-    const capWeb = buildCaption('capWeb', 'WEBSITES', []);
-    const capAI = buildCaption('capAI', 'AI MODELS', []);
+    const capMobile = buildCaption('capMobile', 'MOBILE DEV', []);
+    const capDesktop = buildCaption('capDesktop', 'DESKTOP DEV', []);
+    const capWeb = buildCaption('capWeb', 'WEB PRODUCTS', []);
+    const capAI = buildCaption('capAI', 'INTELLIGENCE AI', []);
 
     const net = (function buildNeuralNet() {
       const nodesG = document.getElementById('nodes');
@@ -1808,6 +2050,9 @@
       return { nodes: allNodes, conns: allConns };
     })();
 
+    /* ============================================================
+       CENTRALIZED GSAP REEL TIMELINE
+       ============================================================ */
     function buildTimeline() {
       const tl = gsap.timeline({});
 
@@ -1821,6 +2066,7 @@
       gsap.set('#bg-problem', { opacity: 0 });
       gsap.set('#bg-solution', { opacity: 0 });
 
+      /* Scene 1 Reveal (0.00s) */
       tl.set('#scene-hook', { opacity: 1 }, 0);
       punchIn(tl, 1.0, 0, 2.5, 'power2.out');
 
@@ -1842,14 +2088,15 @@
       punchIn(tl, 1.0, 1.9, 0.2, 'power4.out');
       punchIn(tl, 1.0, 2.1, 0.4, 'power2.out');
 
+      /* Whip to Problem */
       whip(tl, 2.5, '#scene-hook', '#scene-problem', 'right');
 
+      /* Scene 2: Problem Sequential Display (2.95s) */
       const problemT = 2.95;
 
       tl.to('#bg-problem', { opacity: 1, duration: 0.5, ease: 'power2.out' }, problemT);
+      setTelemetryProcessSpeed(tl, '0.33x', 'glow-red', problemT); // Slow metric down during problem
 
-      tl.set('#scene-problem .glitch-text', { opacity: 0 });
-      tl.set('#scene-problem .problem-or', { opacity: 0 });
       tl.set('.broken-mockup', { opacity: 0, y: 40, rotation: -15 });
       punchIn(tl, 1.0, problemT, 3.0, 'power2.inOut');
 
@@ -1857,43 +2104,31 @@
       tl.to('#bm2', { opacity: 0.5, y: 0, rotation: 10, duration: 0.5, ease: 'power2.out' }, problemT + 0.25);
       tl.to('#bm3', { opacity: 0.4, y: 0, rotation: -5, duration: 0.5, ease: 'power2.out' }, problemT + 0.4);
 
-      tl.to('#gt-generic', {
-        opacity: 1, duration: 0.15, ease: 'power2.out'
-      }, problemT + 0.3);
-      window.registerSpark(540, 700, 15, problemT + 0.35);
-      tl.call(() => spawnSparkBurst(540, 700, 15), null, problemT + 0.35);
-      punchIn(tl, 1.0, problemT + 0.3, 0.15, 'power4.out');
-      punchIn(tl, 1.0, problemT + 0.45, 0.2, 'power2.out');
+      /* Diagnostic Step 1 */
+      tl.to('#p-step-1', { opacity: 1, y: 0, duration: 0.4, ease: 'power3.out' }, problemT + 0.3);
+      window.registerSpark(540, 960, 15, problemT + 0.35);
+      tl.call(() => spawnSparkBurst(540, 960, 15), null, problemT + 0.35);
+      tl.to('#p-step-1', { opacity: 0, y: -40, duration: 0.35, ease: 'power3.in' }, problemT + 1.25);
 
-      tl.to('#or-then1', {
-        opacity: 1, duration: 0.2
-      }, problemT + 0.9);
+      /* Diagnostic Step 2 */
+      tl.to('#p-step-2', { opacity: 1, y: 0, duration: 0.4, ease: 'power3.out' }, problemT + 1.4);
+      window.registerSpark(540, 960, 15, problemT + 1.45);
+      tl.call(() => spawnSparkBurst(540, 960, 15), null, problemT + 1.45);
+      tl.to('#p-step-2', { opacity: 0, y: -40, duration: 0.35, ease: 'power3.in' }, problemT + 2.35);
 
-      tl.to('#gt-slow', {
-        opacity: 1, duration: 0.15
-      }, problemT + 1.2);
-      window.registerSpark(540, 960, 15, problemT + 1.25);
-      tl.call(() => spawnSparkBurst(540, 960, 15), null, problemT + 1.25);
-      punchIn(tl, 1.0, problemT + 1.2, 0.15, 'power4.out');
-      punchIn(tl, 1.0, problemT + 1.35, 0.2, 'power2.out');
+      /* Diagnostic Step 3 */
+      tl.to('#p-step-3', { opacity: 1, y: 0, duration: 0.4, ease: 'power3.out' }, problemT + 2.5);
+      window.registerSpark(540, 960, 25, problemT + 2.55);
+      tl.call(() => spawnSparkBurst(540, 960, 25), null, problemT + 2.55);
 
-      tl.to('#or-then2', {
-        opacity: 1, duration: 0.2
-      }, problemT + 1.8);
-
-      tl.to('#gt-expensive', {
-        opacity: 1, duration: 0.15
-      }, problemT + 2.1);
-      window.registerSpark(540, 1220, 25, problemT + 2.15);
-      tl.call(() => spawnSparkBurst(540, 1220, 25), null, problemT + 2.15);
-      punchIn(tl, 1.0, problemT + 2.1, 0.15, 'power4.out');
-      punchIn(tl, 1.0, problemT + 2.3, 0.3, 'power2.out');
-
+      /* Whip to Solution Brand */
       whip(tl, 6.0, '#scene-problem', '#scene-solution', 'left');
 
       tl.to('#bg-problem', { opacity: 0, duration: 0.5, ease: 'power2.out' }, 6.0);
       tl.to('#bg-solution', { opacity: 1, duration: 0.5, ease: 'power2.out' }, 6.0);
+      setTelemetryProcessSpeed(tl, '2.50x', 'glow-orange', 6.0); // Boost speed upon brand reveal
 
+      /* Scene 3: Solution (6.5s) */
       const solT = 6.5;
 
       tl.set('#scene-solution .forge-glow', { opacity: 0, scale: 0.3 });
@@ -1917,26 +2152,23 @@
       tl.to(letters, {
         opacity: 1, y: 0, scale: 1, rotation: 0,
         duration: 0.4, stagger: 0.08, ease: 'back.out(1.8)'
-      }, solT + 1.4);
-
-      letters.forEach((l, i) => {
-        window.registerSpark(280 + i * 60, 1100, 8, solT + 1.4 + i * 0.08);
-        tl.call(() => spawnSparkBurst(280 + i * 60, 1100, 8), null, solT + 1.4 + i * 0.08);
-      });
+      }, solT + 0.5);
 
       tl.to('#scene-solution .brand-tagline', {
         opacity: 1, y: 0, duration: 0.5, ease: 'power2.out'
-      }, solT + 2.6);
-      tl.to('#scene-solution .brand-tagline span', {
-        opacity: 1, duration: 0.3, stagger: 0.1, ease: 'power2.out'
-      }, solT + 2.7);
+      }, solT + 1.5);
+
+      /* Transition to Core Interface Mode */
+      tl.to('#app-navigation', { opacity: 1, y: 0, duration: 0.5 }, 10.0);
+      tl.to('#telemetry-widget', { opacity: 1, y: 0, duration: 0.5 }, 10.0);
+      setTelemetryProcessSpeed(tl, '1.00x', 'glow-orange', 10.0);
 
       whip(tl, 10.5, '#scene-solution', '#scene-mobile', 'right');
 
+      /* Scene 4: Mobile Apps (10.95s) */
       const mobT = 10.95;
+      updateHeaderTabs(tl, 'mobile', mobT);
 
-      const chipsM = document.querySelectorAll('#chipsMobile .service-icon-chip');
-      tl.set(chipsM, { opacity: 0, y: -20 });
       tl.set('#phone', { opacity: 0, scale: 0.4, y: 80, rotation: -8 });
       tl.set('.phone-screen', { opacity: 0, y: 40 });
       tl.set('.phone-header', { opacity: 0, x: -20 });
@@ -1950,50 +2182,47 @@
       tl.set('#scene-mobile .caption-sub', { opacity: 0, y: 20 });
 
       tl.to('#bg-solution', { opacity: 0, duration: 0.5, ease: 'power2.out' }, mobT);
-
       punchIn(tl, 1.0, mobT, 3.0, 'power2.out');
-
-      tl.to(chipsM, { opacity: 1, y: 0, duration: 0.35, stagger: 0.07, ease: 'back.out(1.5)' }, mobT + 0.1);
 
       tl.to('#phone', {
         opacity: 1, scale: 1, y: 0, rotation: 0,
         duration: 0.55, ease: 'back.out(1.4)'
-      }, mobT + 0.3);
-      tl.to('.phone-screen', { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' }, mobT + 0.6);
+      }, mobT + 0.2);
+      tl.to('.phone-screen', { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' }, mobT + 0.4);
 
-      tl.to('.phone-header', { opacity: 1, x: 0, duration: 0.3, ease: 'power2.out' }, mobT + 0.85);
-      tl.to('.phone-header .avatar', { opacity: 1, scale: 1, duration: 0.3, ease: 'back.out(2)' }, mobT + 1.0);
-
-      tl.to('.phone-title', { opacity: 1, y: 0, duration: 0.3, ease: 'power2.out' }, mobT + 1.05);
-
+      tl.to('.phone-header', { opacity: 1, x: 0, duration: 0.3, ease: 'power2.out' }, mobT + 0.6);
+      tl.to('.phone-header .avatar', { opacity: 1, scale: 1, duration: 0.3, ease: 'back.out(2)' }, mobT + 0.7);
+      tl.to('.phone-title', { opacity: 1, y: 0, duration: 0.3, ease: 'power2.out' }, mobT + 0.8);
       tl.to('.phone-card', {
         opacity: 1, y: 0, duration: 0.35, stagger: 0.12, ease: 'back.out(1.3)'
-      }, mobT + 1.2);
+      }, mobT + 1.0);
+      tl.to('.phone-cta', { opacity: 1, y: 0, scale: 1, duration: 0.4, ease: 'back.out(1.8)' }, mobT + 1.4);
 
-      tl.to('.phone-cta', { opacity: 1, y: 0, scale: 1, duration: 0.4, ease: 'back.out(1.8)' }, mobT + 1.7);
+      /* Cursor Simulation: Mobile Screen Action Click */
+      tl.set('#cursor', { opacity: 1, x: 800, y: 1100 }, mobT + 1.6);
+      tl.to('#cursor', { x: 540, y: 1300, duration: 0.6, ease: 'power2.inOut' }, mobT + 1.7);
+      tl.to('.phone-cta', { scale: 0.9, duration: 0.1 }, mobT + 2.3);
+      tl.to('.phone-cta', { scale: 1.0, duration: 0.1 }, mobT + 2.4);
 
-      tl.to('#phoneNotif', {
-        opacity: 1, x: 0, duration: 0.35, ease: 'back.out(1.5)'
-      }, mobT + 2.0);
-      window.registerSpark(540, 1500, 12, mobT + 2.0);
-      tl.call(() => spawnSparkBurst(540, 1500, 12), null, mobT + 2.0);
+      /* Trigger Success Spark + Notification */
+      window.registerSpark(540, 1300, 20, mobT + 2.4);
+      tl.call(() => spawnSparkBurst(540, 1300, 20), null, mobT + 2.4);
+      tl.to('#phoneNotif', { opacity: 1, x: 0, duration: 0.4, ease: 'back.out(1.4)' }, mobT + 2.4);
+      tl.to('#cursor', { opacity: 0, duration: 0.2 }, mobT + 2.8);
 
-      tl.to('#scene-mobile .caption-eyebrow', { opacity: 1, y: 0, duration: 0.35 }, mobT + 0.4);
+      tl.to('#scene-mobile .caption-eyebrow', { opacity: 1, y: 0, duration: 0.35 }, mobT + 0.2);
       tl.to(capMobile, {
         opacity: 1, y: 0, scale: 1,
         duration: 0.4, stagger: 0.07, ease: 'back.out(1.5)'
-      }, mobT + 0.7);
-      tl.to('#scene-mobile .caption-sub', { opacity: 1, y: 0, duration: 0.4 }, mobT + 1.4);
+      }, mobT + 0.4);
+      tl.to('#scene-mobile .caption-sub', { opacity: 1, y: 0, duration: 0.4 }, mobT + 0.9);
 
       whip(tl, 14.0, '#scene-mobile', '#scene-desktop', 'right');
 
-      /* ============================================================
-         SCENE 5: DESKTOP APPS (14.45s – 17.5s)
-         ============================================================ */
+      /* Scene 5: Desktop Apps (14.45s) */
       const dskT = 14.45;
+      updateHeaderTabs(tl, 'desktop', dskT);
 
-      const chipsD = document.querySelectorAll('#chipsDesktop .service-icon-chip');
-      tl.set(chipsD, { opacity: 0, y: -20 });
       tl.set('#desktop', { opacity: 0, scale: 0.4, rotationY: 25 });
       tl.set('.desktop-titlebar .light', { opacity: 0, scale: 0 });
       tl.set('.desktop-titlebar .title', { opacity: 0 });
@@ -2007,48 +2236,43 @@
 
       punchIn(tl, 1.0, dskT, 3.0, 'power2.out');
 
-      tl.to(chipsD, { opacity: 1, y: 0, duration: 0.35, stagger: 0.07, ease: 'back.out(1.5)' }, dskT + 0.1);
-
       tl.to('#desktop', {
         opacity: 1, scale: 1, rotationY: 0,
         duration: 0.55, ease: 'back.out(1.3)'
-      }, dskT + 0.3);
+      }, dskT + 0.2);
 
       tl.to('.desktop-titlebar .light', {
         opacity: 1, scale: 1, duration: 0.25, stagger: 0.08, ease: 'back.out(2)'
-      }, dskT + 0.6);
-      tl.to('.desktop-titlebar .title', { opacity: 1, duration: 0.3 }, dskT + 0.85);
+      }, dskT + 0.5);
+      tl.to('.desktop-titlebar .title', { opacity: 1, duration: 0.3 }, dskT + 0.7);
 
       tl.to('.desktop-sidebar .side-item', {
         opacity: 1, x: 0, duration: 0.3, stagger: 0.07, ease: 'power2.out'
-      }, dskT + 0.7);
+      }, dskT + 0.6);
 
-      tl.to('.desktop-content .d-title', { opacity: 1, y: 0, duration: 0.3 }, dskT + 0.95);
+      tl.to('.desktop-content .d-title', { opacity: 1, y: 0, duration: 0.3 }, dskT + 0.8);
 
       tl.to('.desktop-content .d-card', {
         opacity: 1, rotationY: 0, duration: 0.45, stagger: 0.1, ease: 'back.out(1.4)'
-      }, dskT + 1.1);
+      }, dskT + 0.9);
 
       tl.to('.desktop-content .bar', {
         scaleY: 1, duration: 0.5, stagger: 0.07, ease: 'power2.out'
-      }, dskT + 1.5);
+      }, dskT + 1.2);
 
-      tl.to('#scene-desktop .caption-eyebrow', { opacity: 1, y: 0, duration: 0.35 }, dskT + 0.4);
+      tl.to('#scene-desktop .caption-eyebrow', { opacity: 1, y: 0, duration: 0.35 }, dskT + 0.2);
       tl.to(capDesktop, {
         opacity: 1, y: 0, scale: 1,
         duration: 0.4, stagger: 0.07, ease: 'back.out(1.5)'
-      }, dskT + 0.7);
-      tl.to('#scene-desktop .caption-sub', { opacity: 1, y: 0, duration: 0.4 }, dskT + 1.4);
+      }, dskT + 0.4);
+      tl.to('#scene-desktop .caption-sub', { opacity: 1, y: 0, duration: 0.4 }, dskT + 0.9);
 
       whip(tl, 17.5, '#scene-desktop', '#scene-web', 'right');
 
-      /* ============================================================
-         SCENE 6: WEBSITES (17.95s – 21s)
-         ============================================================ */
+      /* Scene 6: Websites (17.95s) */
       const webT = 17.95;
+      updateHeaderTabs(tl, 'web', webT);
 
-      const chipsW = document.querySelectorAll('#chipsWeb .service-icon-chip');
-      tl.set(chipsW, { opacity: 0, y: -20 });
       tl.set('#browser', { opacity: 0, scale: 0.4, y: 40 });
       tl.set('.browser-bar .b-light', { opacity: 0, scale: 0 });
       tl.set('.browser-bar .url', { opacity: 0, y: -10 });
@@ -2062,45 +2286,66 @@
 
       punchIn(tl, 1.0, webT, 3.0, 'power2.out');
 
-      tl.to(chipsW, { opacity: 1, y: 0, duration: 0.35, stagger: 0.07, ease: 'back.out(1.5)' }, webT + 0.1);
-
       tl.to('#browser', {
         opacity: 1, scale: 1, y: 0, duration: 0.55, ease: 'back.out(1.3)'
-      }, webT + 0.3);
+      }, webT + 0.2);
 
       tl.to('.browser-bar .b-light', {
         opacity: 1, scale: 1, duration: 0.25, stagger: 0.08, ease: 'back.out(2)'
-      }, webT + 0.6);
-      tl.to('.browser-bar .url', { opacity: 1, y: 0, duration: 0.3 }, webT + 0.85);
+      }, webT + 0.5);
+      tl.to('.browser-bar .url', { opacity: 1, y: 0, duration: 0.3 }, webT + 0.7);
 
-      tl.to('.browser-hero .bh-eyebrow', { opacity: 1, x: 0, duration: 0.3 }, webT + 1.0);
+      tl.to('.browser-hero .bh-eyebrow', { opacity: 1, x: 0, duration: 0.3 }, webT + 0.8);
       tl.to('.browser-hero .bw', {
         opacity: 1, y: 0, duration: 0.4, stagger: 0.1, ease: 'back.out(1.4)'
-      }, webT + 1.15);
+      }, webT + 0.9);
       tl.to('.browser-hero .bh-cta', {
         opacity: 1, scale: 1, duration: 0.4, ease: 'back.out(1.8)'
-      }, webT + 1.65);
+      }, webT + 1.2);
 
       tl.to('.browser-strip .bs-cell', {
         opacity: 1, rotationX: 0, duration: 0.4, stagger: 0.12, ease: 'back.out(1.4)'
-      }, webT + 1.85);
+      }, webT + 1.4);
 
-      tl.to('#scene-web .caption-eyebrow', { opacity: 1, y: 0, duration: 0.35 }, webT + 0.4);
+      /* Counter / Numerical Ticks Simulation */
+      tl.to('#stat-val-1', {
+        innerText: 12500,
+        duration: 1.2,
+        snap: { innerText: 1 },
+        onUpdate: function () {
+          document.getElementById('stat-val-1').textContent = Math.floor(this.targets()[0].innerText).toLocaleString() + "+";
+        }
+      }, webT + 1.4);
+
+      tl.to('#stat-val-2', {
+        innerText: 4.9,
+        duration: 1.0,
+        onUpdate: function () {
+          document.getElementById('stat-val-2').textContent = parseFloat(this.targets()[0].innerText).toFixed(1) + "★";
+        }
+      }, webT + 1.4);
+
+      tl.to('#stat-val-3', {
+        innerText: 99.9,
+        duration: 1.2,
+        onUpdate: function () {
+          document.getElementById('stat-val-3').textContent = parseFloat(this.targets()[0].innerText).toFixed(1) + "%";
+        }
+      }, webT + 1.4);
+
+      tl.to('#scene-web .caption-eyebrow', { opacity: 1, y: 0, duration: 0.35 }, webT + 0.2);
       tl.to(capWeb, {
         opacity: 1, y: 0, scale: 1,
         duration: 0.4, stagger: 0.07, ease: 'back.out(1.5)'
-      }, webT + 0.7);
-      tl.to('#scene-web .caption-sub', { opacity: 1, y: 0, duration: 0.4 }, webT + 1.4);
+      }, webT + 0.4);
+      tl.to('#scene-web .caption-sub', { opacity: 1, y: 0, duration: 0.4 }, webT + 0.9);
 
-      whip(tl, 21.0, '#scene-web', '#scene-ai', 'right');
+      whip(tl, 17.5 + 3.5, '#scene-web', '#scene-ai', 'right');
 
-      /* ============================================================
-         SCENE 7: AI MODELS (21.45s – 24.5s)
-         ============================================================ */
+      /* Scene 7: AI Models (21.45s) */
       const aiT = 21.45;
+      updateHeaderTabs(tl, 'ai', aiT);
 
-      const chipsA = document.querySelectorAll('#chipsAI .service-icon-chip');
-      tl.set(chipsA, { opacity: 0, y: -20 });
       tl.set('#aiStage', { opacity: 0, scale: 0.5 });
       tl.set(net.nodes.map(n => n.el), { opacity: 0, scale: 0 });
       net.conns.forEach(c => { c.el.style.strokeDashoffset = c.length; });
@@ -2111,27 +2356,24 @@
 
       punchIn(tl, 1.0, aiT, 3.0, 'power2.out');
 
-      tl.to(chipsA, { opacity: 1, y: 0, duration: 0.35, stagger: 0.07, ease: 'back.out(1.5)' }, aiT + 0.1);
-
-      tl.to('#aiStage', { opacity: 1, scale: 1, duration: 0.5, ease: 'back.out(1.3)' }, aiT + 0.3);
-
-      tl.to('#codeBlock', { opacity: 0.9, x: 0, duration: 0.4, ease: 'power2.out' }, aiT + 0.5);
+      tl.to('#aiStage', { opacity: 1, scale: 1, duration: 0.5, ease: 'back.out(1.3)' }, aiT + 0.2);
+      tl.to('#codeBlock', { opacity: 0.9, x: 0, duration: 0.4, ease: 'power2.out' }, aiT + 0.4);
       tl.to('#codeBlock', { opacity: 0, duration: 0.3 }, aiT + 1.5);
 
       tl.to(net.conns.map(c => c.el), {
         strokeDashoffset: 0, duration: 0.6,
         stagger: { each: 0.008, from: 'random' }, ease: 'power2.out'
-      }, aiT + 0.7);
+      }, aiT + 0.5);
 
       [0, 1, 2, 3].forEach(li => {
         const layerNodes = net.nodes.filter(n => n.layer === li).map(n => n.el);
         tl.to(layerNodes, {
           opacity: 1, scale: 1,
           duration: 0.3, stagger: 0.06, ease: 'back.out(2.2)'
-        }, aiT + 0.9 + li * 0.25);
+        }, aiT + 0.7 + li * 0.25);
         tl.to(layerNodes, {
           attr: { class: 'ai-node lit' }, duration: 0.2
-        }, aiT + 1.1 + li * 0.25);
+        }, aiT + 0.9 + li * 0.25);
       });
 
       for (let p = 0; p < 5; p++) {
@@ -2150,7 +2392,7 @@
           pulse.setAttribute('r', 7);
           pulse.setAttribute('class', 'ai-pulse');
           document.getElementById('pulses').appendChild(pulse);
-          const startTime = aiT + 1.8 + p * 0.2 + i * 0.25;
+          const startTime = aiT + 1.5 + p * 0.2 + i * 0.25;
           tl.set(pulse, { attr: { cx: prev.x, cy: prev.y }, opacity: 0 }, startTime);
           tl.to(pulse, { opacity: 1, duration: 0.1 }, startTime);
           tl.to(pulse, {
@@ -2169,18 +2411,20 @@
       window.registerSpark(540, 1100, 25, aiT + 2.5);
       tl.call(() => spawnSparkBurst(540, 1100, 25), null, aiT + 2.5);
 
-      tl.to('#scene-ai .caption-eyebrow', { opacity: 1, y: 0, duration: 0.35 }, aiT + 0.4);
+      tl.to('#scene-ai .caption-eyebrow', { opacity: 1, y: 0, duration: 0.35 }, aiT + 0.2);
       tl.to(capAI, {
         opacity: 1, y: 0, scale: 1,
         duration: 0.4, stagger: 0.07, ease: 'back.out(1.5)'
-      }, aiT + 0.7);
-      tl.to('#scene-ai .caption-sub', { opacity: 1, y: 0, duration: 0.4 }, aiT + 1.4);
+      }, aiT + 0.4);
+      tl.to('#scene-ai .caption-sub', { opacity: 1, y: 0, duration: 0.4 }, aiT + 0.9);
+
+      /* Close active tab state and clear Telemetry widget */
+      tl.to('#app-navigation', { opacity: 0, y: -40, duration: 0.4 }, 24.5);
+      tl.to('#telemetry-widget', { opacity: 0, y: 40, duration: 0.4 }, 24.5);
 
       whip(tl, 24.5, '#scene-ai', '#scene-cta', 'right');
 
-      /* ============================================================
-         SCENE 8: CTA (24.95s – 30s)
-         ============================================================ */
+      /* Scene 8: CTA (24.95s – 30s) */
       const ctaT = 24.95;
 
       tl.set('#scene-cta .cta-eyebrow', { opacity: 0, y: 20 });
