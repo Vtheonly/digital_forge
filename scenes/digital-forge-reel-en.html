@@ -1186,7 +1186,6 @@
               <!-- ============ SCENE 3: SOLUTION / BRAND ============ -->
               <div class="scene" id="scene-solution">
                 <div class="forge-glow"></div>
-                <!-- Typographic Solution Frame (No brand logo elements) -->
                 <h1 class="brand-name">
                   <span class="letter">C</span><span class="letter">U</span><span class="letter">S</span><span
                     class="letter">T</span><span class="letter">O</span><span class="letter">M</span>
@@ -1724,9 +1723,6 @@
       drawParticlesOnly(t);
     }
 
-    /* ============================================================
-       HOOK SCENE — flash device cutaways
-       ============================================================ */
     (function buildHookFlashes() {
       const row = document.getElementById('hookFlashes');
       const flashes = [
@@ -1747,9 +1743,6 @@
       });
     })();
 
-    /* ============================================================
-       CAPTION BUILDERS
-       ============================================================ */
     function buildCaption(elId, text, hotWords = []) {
       const el = document.getElementById(elId);
       if (!el) return [];
@@ -1770,9 +1763,6 @@
     const capWeb = buildCaption('capWeb', 'WEBSITES', []);
     const capAI = buildCaption('capAI', 'AI MODELS', []);
 
-    /* ============================================================
-       NEURAL NETWORK BUILDER
-       ============================================================ */
     const net = (function buildNeuralNet() {
       const nodesG = document.getElementById('nodes');
       const layers = [
@@ -1818,13 +1808,9 @@
       return { nodes: allNodes, conns: allConns };
     })();
 
-    /* ============================================================
-       MASTER TIMELINE
-       ============================================================ */
     function buildTimeline() {
       const tl = gsap.timeline({});
 
-      /* ===== Initial state ===== */
       gsap.set('.scene', { opacity: 0 });
       gsap.set(camEl, { scale: 1.0, rotation: 0, filter: 'blur(0px)' });
       gsap.set('#scene-hook .word', { opacity: 0, y: 80, rotationX: -60 });
@@ -1835,9 +1821,6 @@
       gsap.set('#bg-problem', { opacity: 0 });
       gsap.set('#bg-solution', { opacity: 0 });
 
-      /* ============================================================
-         SCENE 1: HOOK (0s – 2.5s)
-         ============================================================ */
       tl.set('#scene-hook', { opacity: 1 }, 0);
       punchIn(tl, 1.0, 0, 2.5, 'power2.out');
 
@@ -1861,9 +1844,6 @@
 
       whip(tl, 2.5, '#scene-hook', '#scene-problem', 'right');
 
-      /* ============================================================
-         SCENE 2: PROBLEM (2.95s – 6s)
-         ============================================================ */
       const problemT = 2.95;
 
       tl.to('#bg-problem', { opacity: 1, duration: 0.5, ease: 'power2.out' }, problemT);
@@ -1914,9 +1894,6 @@
       tl.to('#bg-problem', { opacity: 0, duration: 0.5, ease: 'power2.out' }, 6.0);
       tl.to('#bg-solution', { opacity: 1, duration: 0.5, ease: 'power2.out' }, 6.0);
 
-      /* ============================================================
-         SCENE 3: SOLUTION / BRAND REVEAL (6.45s – 10.5s)
-         ============================================================ */
       const solT = 6.5;
 
       tl.set('#scene-solution .forge-glow', { opacity: 0, scale: 0.3 });
@@ -1956,9 +1933,6 @@
 
       whip(tl, 10.5, '#scene-solution', '#scene-mobile', 'right');
 
-      /* ============================================================
-         SCENE 4: MOBILE APPS (10.95s – 14s)
-         ============================================================ */
       const mobT = 10.95;
 
       const chipsM = document.querySelectorAll('#chipsMobile .service-icon-chip');

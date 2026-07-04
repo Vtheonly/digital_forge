@@ -1,8 +1,5 @@
 /**
  * rendererFactory.js — Picks the right renderer based on config
- *
- * Supports both named and default module export conventions dynamically
- * to prevent instantiation failures.
  */
 
 const PlaywrightModule = require("../renderers/PlaywrightRenderer");
