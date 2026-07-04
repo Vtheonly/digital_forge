@@ -374,16 +374,19 @@
       position: relative;
       font-family: 'Inter', sans-serif;
       font-weight: 900;
-      font-size: 52px;
+      font-size: 64px;
       letter-spacing: -1px;
-      line-height: 1.2;
+      line-height: 1.15;
       color: #fff;
       text-align: center;
       opacity: 0;
-      margin: 15px 0;
+      margin: 18px 0;
       width: 100%;
-      max-width: 920px;
+      max-width: 960px;
+      padding: 0 30px;
+      box-sizing: border-box;
       word-wrap: break-word;
+      overflow-wrap: break-word;
     }
 
     .glitch-text::before,
@@ -1124,7 +1127,6 @@
       justify-content: center;
       color: rgba(255, 255, 255, 0.3);
       font-size: 18px;
-      transition: all 0.3s;
     }
 
     #scene-cta .cta-service.done .check {
@@ -1233,7 +1235,7 @@
               <!-- ============ SCENE 3: SOLUTION / BRAND ============ -->
               <div class="scene" id="scene-solution">
                 <div class="forge-glow"></div>
-                <div class="anvil-wrap">
+                <div class="anvil-wrap" id="brandIconWrap">
                   <svg viewBox="0 0 200 200" width="320" height="320">
                     <defs>
                       <linearGradient id="brandGrad" x1="0" y1="0" x2="0" y2="1">
@@ -1248,18 +1250,26 @@
                       </radialGradient>
                     </defs>
                     <circle cx="100" cy="100" r="95" fill="url(#sparkGlow2)" opacity="0.6" />
-                    <path d="M70 65 L40 100 L70 135 M130 65 L160 100 L130 135" fill="none" stroke="url(#brandGrad)"
-                      stroke-width="12" stroke-linecap="round" stroke-linejoin="round" />
-                    <path d="M115 55 L85 145" fill="none" stroke="url(#brandGrad)" stroke-width="12"
-                      stroke-linecap="round" />
+                    <!-- Generic premium tech hexagon icon (replaces forge anvil) -->
+                    <polygon points="100,32 162,67 162,133 100,168 38,133 38,67"
+                             fill="none" stroke="url(#brandGrad)" stroke-width="10"
+                             stroke-linecap="round" stroke-linejoin="round" />
+                    <polygon points="100,58 138,79 138,121 100,142 62,121 62,79"
+                             fill="url(#brandGrad)" opacity="0.88" />
+                    <circle cx="100" cy="100" r="14" fill="#fff5e1"
+                            filter="drop-shadow(0 0 12px rgba(255,140,40,0.9))" />
                     <g id="impactSparks2">
-                      <line x1="100" y1="100" x2="60" y2="60" stroke="#fff5e1" stroke-width="3"
+                      <line x1="100" y1="32" x2="70" y2="10" stroke="#fff5e1" stroke-width="3"
                         stroke-linecap="round" />
-                      <line x1="100" y1="100" x2="140" y2="60" stroke="#fff5e1" stroke-width="3"
+                      <line x1="100" y1="32" x2="130" y2="10" stroke="#fff5e1" stroke-width="3"
                         stroke-linecap="round" />
-                      <line x1="100" y1="100" x2="40" y2="90" stroke="#ffb800" stroke-width="3"
+                      <line x1="38" y1="67" x2="8" y2="52" stroke="#ffb800" stroke-width="3"
                         stroke-linecap="round" />
-                      <line x1="100" y1="100" x2="160" y2="90" stroke="#ffb800" stroke-width="3"
+                      <line x1="162" y1="67" x2="192" y2="52" stroke="#ffb800" stroke-width="3"
+                        stroke-linecap="round" />
+                      <line x1="38" y1="133" x2="8" y2="148" stroke="#ffb800" stroke-width="3"
+                        stroke-linecap="round" />
+                      <line x1="162" y1="133" x2="192" y2="148" stroke="#ffb800" stroke-width="3"
                         stroke-linecap="round" />
                     </g>
                   </svg>
@@ -1492,17 +1502,33 @@
        Premium Reel — Dynamic Timeline Engine (Fixed & Stabilized)
        ============================================================ */
 
-    gsap.config({ nullTargetWarn: false });
+    gsap.config({ nullTargetWarn: false, force3D: false });
 
     // Robust environment detection combining programmatic and hash checks safely
     window.renderMode = (window.renderMode === true) || /capture/i.test(location.hash);
+
+    // In render mode, freeze GSAP's internal ticker so it never advances the timeline
+    // between Playwright's manual seek() calls. Also disable lag smoothing so seek()
+    // is exact and deterministic.
+    if (window.renderMode) {
+      try {
+        gsap.ticker.lagSmoothing(0);
+        gsap.ticker.sleep();
+        // Ensure the global timeline cannot self-advance even if a stray play() is called.
+        gsap.globalTimeline.pause();
+      } catch (e) { /* gsap may not be loaded yet in some edge cases */ }
+    }
 
     if (window.renderMode) {
       document.body.classList.add('render-active');
     }
 
     /* ---------- Stage fit ---------- */
+    // Stage fit is DISABLED in render mode. The Playwright renderer pins the viewport
+    // to exactly 1080x1920 and pins #stageWrap to transform:none via injected CSS;
+    // any JS-driven scale() here would race the renderer and cause sub-pixel shimmer.
     function fitStage() {
+      if (window.renderMode) return;
       const wrap = document.getElementById('stageWrap');
       const vw = window.innerWidth;
       const vh = window.innerHeight;
@@ -1521,8 +1547,9 @@
     const camEl = document.getElementById('camera');
     const driftEl = document.getElementById('drift');
     const shakeEl = document.getElementById('shake');
-    const glowOrange = document.getElementById('glow-orange');
-    const glowBlue = document.getElementById('glow-blue');
+    // NOTE: 'glow-orange' / 'glow-blue' element refs removed — those IDs never existed
+    // in the DOM and were causing a null.style.transform TypeError on every frame,
+    // which broke the entire renderAtTime() call from Playwright.
 
     /* ============================================================
        PARTICLE SYSTEM — forge embers + impact sparks
@@ -1750,20 +1777,20 @@
 
     // Handles background layout position updates and active animations deterministically
     function updateAmbient(t) {
-      // 1. Mesh drift simulation
+      // 1. Mesh drift simulation — round to integer pixels to prevent sub-pixel shimmer
       const meshT = t * 0.15;
-      const mx = Math.sin(meshT) * -40;
-      const my = Math.cos(meshT * 1.5) * 30;
+      const mx = Math.round(Math.sin(meshT) * -40);
+      const my = Math.round(Math.cos(meshT * 1.5) * 30);
       const ms = 1 + Math.sin(meshT * 0.8) * 0.06;
-      document.getElementById('bg-mesh').style.transform = `translate3d(${mx}px, ${my}px, 0) scale(${ms})`;
+      document.getElementById('bg-mesh').style.transform = `translate(${mx}px, ${my}px) scale(${ms.toFixed(4)})`;
 
-      // 2. Grid shift simulation (modulo grid pattern size 70px)
-      const gridOffset = (t * 20) % 70;
+      // 2. Grid shift simulation (modulo grid pattern size 70px) — integer pixels only
+      const gridOffset = Math.round((t * 20) % 70);
       document.getElementById('bg-grid').style.backgroundPosition = `${gridOffset}px ${gridOffset}px`;
 
-      // 3. Rays rotation
+      // 3. Rays rotation (float degrees are fine for rotate; rasterizer handles AA)
       const rayAngle = (t * 12) % 360;
-      document.getElementById('bg-rays').style.transform = `rotate(${rayAngle}deg)`;
+      document.getElementById('bg-rays').style.transform = `rotate(${rayAngle.toFixed(3)}deg)`;
 
       // 4. Film grain jump simulation (modulo frame tick step index)
       const grainStep = Math.floor(t * 15) % 4;
@@ -1788,9 +1815,9 @@
         driftEl.style.transform = `translate3d(${dx}px, ${dy}px, 0) rotate(${dr}deg)`;
       }
 
-      // 6. Glow sphere expansions
-      glowOrange.style.transform = `translate3d(${Math.sin(t * 0.3) * 40}px, ${Math.cos(t * 0.25) * 30}px, 0) scale(${1 + Math.sin(t * 0.2) * 0.08})`;
-      glowBlue.style.transform = `translate3d(${Math.cos(t * 0.28) * -50}px, ${Math.sin(t * 0.22) * 35}px, 0) scale(${1 + Math.cos(t * 0.18) * 0.08})`;
+      // 6. Glow sphere expansions — REMOVED. The #glow-orange / #glow-blue elements
+      // never existed in the DOM; the previous lines were throwing a TypeError on
+      // every frame, which silently aborted renderAtTime() when invoked by Playwright.
 
       // 7. Paint canvas rendering
       drawParticlesOnly(t);
@@ -2387,7 +2414,10 @@
     window.masterTL = masterTL;
 
     if (window.renderMode) {
+      // Render mode: pause timeline and freeze the ticker. Playwright's renderAtTime()
+      // will seek() the timeline deterministically per frame.
       masterTL.pause(0);
+      try { gsap.ticker.sleep(); } catch (e) {}
     } else {
       masterTL.play(0);
       gsap.ticker.add(() => updateAmbient(masterTL.time()));

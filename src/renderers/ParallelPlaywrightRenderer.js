@@ -1,5 +1,28 @@
 /**
- * PlaywrightRenderer.js — Frame-by-frame renderer using Playwright/Chromium (Optimized & Stabilized)
+ * PlaywrightRenderer.js — Frame-by-frame renderer using Playwright/Chromium
+ *
+ * STABILITY OVERVIEW (read before editing):
+ *
+ *   This renderer captures frames DISCRETELY. It calls `window.renderAtTime(t)`
+ *   which seeks the GSAP master timeline to a precise time, then takes a CDP
+ *   screenshot. There is no real-time playback during capture.
+ *
+ *   That means ANY source of real-time advancement must be eliminated, or it
+ *   will fight the manual seek positions and produce high-frequency jitter.
+ *
+ *   The following sources of wall-clock motion are neutralized below:
+ *     1. `performance.now()`            — permanently frozen at 0
+ *     2. `Date.now()`                   — permanently frozen at a fixed epoch
+ *     3. `requestAnimationFrame()`      — replaced with a no-op that never fires
+ *     4. `cancelAnimationFrame()`       — replaced with a no-op
+ *     5. `gsap.ticker`                  — put to sleep + lagSmoothing(0)
+ *     6. `gsap.globalTimeline`          — paused at 0 so stray play() is a no-op
+ *     7. CSS `transition` / `animation` — killed via injected `!important` style tag
+ *     8. `#stageWrap` `transform: scale(...)` — killed via injected `!important` style tag
+ *
+ *   Per-frame, before each screenshot we also force a synchronous layout flush
+ *   via `getComputedStyle(...).opacity` + `offsetHeight` so the GPU compositor
+ *   has caught up with the JS-driven style writes.
  */
 
 const { chromium } = require("playwright");
@@ -21,12 +44,48 @@ class PlaywrightRenderer extends Renderer {
     this._xvfb = null;
   }
 
+  /* ============================================================
+     INIT SCRIPT — injected into every page before any scene JS runs.
+     This is the SINGLE source of truth for clock/RAF freezing.
+     ============================================================ */
+  _clockFreezeInitScript() {
+    return () => {
+      window.renderMode = true;
+
+      // 1. Freeze performance.now() PERMANENTLY at 0.
+      //    (Previous implementation unfroze it after 1000ms — that race caused
+      //    mid-render jitter if scene load took longer than 1s.)
+      performance.now = () => 0;
+
+      // 2. Freeze Date.now() too — some animation polyfills fall back to it.
+      const FROZEN_EPOCH = 1700000000000;
+      Date.now = () => FROZEN_EPOCH;
+
+      // 3. Neutralize requestAnimationFrame so any RAF-based loop in the scene
+      //    never advances state between Playwright's manual seek() calls.
+      const NOOP = () => 0;
+      window.requestAnimationFrame = NOOP;
+      window.webkitRequestAnimationFrame = NOOP;
+      window.mozRequestAnimationFrame = NOOP;
+      window.cancelAnimationFrame = NOOP;
+      window.webkitCancelAnimationFrame = NOOP;
+      window.mozCancelAnimationFrame = NOOP;
+
+      // 4. Neutralize setTimeout/setInterval for any short-tick scene loops.
+      //    We do NOT touch them — Playwright/CDP itself relies on setTimeout for
+      //    internal scheduling. The RAF kill above is sufficient for animation
+      //    loops. (If a scene misbehaves, fix it in the scene file.)
+    };
+  }
+
   async _init() {
     const envInfo = env.detect();
     const c = this.config;
 
-    // Viewport width and height pinned to integer values to prevent sub-pixel layout anomalies.
-    // Programmatic downscaling / quality scaling is handled on the browser compositing layer using Playwright dsf.
+    // Viewport is pinned to native 1080x1920 with integer scale factor.
+    // NEVER scale the viewport via CSS transforms — that produces sub-pixel
+    // layout coords that Chrome's rasterizer snaps inconsistently between
+    // frames, causing high-frequency shimmer during movement.
     const scale = c.get("captureScale");
     const captureW = 1080;
     const captureH = 1920;
@@ -72,15 +131,7 @@ class PlaywrightRenderer extends Renderer {
       deviceScaleFactor: dsf,
     });
 
-    await this.ctx.addInitScript(() => {
-      window.renderMode = true;
-      const _realNow = performance.now.bind(performance);
-      let _frozen = true;
-      performance.now = () => (_frozen ? 0 : _realNow());
-      setTimeout(() => {
-        _frozen = false;
-      }, 1000);
-    });
+    await this.ctx.addInitScript(this._clockFreezeInitScript());
 
     this.page = await this.ctx.newPage();
 
@@ -112,8 +163,6 @@ class PlaywrightRenderer extends Renderer {
               this.browser = await chromium.launch({
                 args: headedArgs,
                 headless: false,
-                viewport: { width: captureW, height: captureH },
-                deviceScaleFactor: dsf,
                 executablePath,
                 env: { ...process.env, DISPLAY: display },
               });
@@ -121,22 +170,14 @@ class PlaywrightRenderer extends Renderer {
                 viewport: { width: captureW, height: captureH },
                 deviceScaleFactor: dsf,
               });
-              await this.ctx.addInitScript(() => {
-                window.renderMode = true;
-                const _realNow = performance.now.bind(performance);
-                let _frozen = true;
-                performance.now = () => (_frozen ? 0 : _realNow());
-                setTimeout(() => {
-                  _frozen = false;
-                }, 1000);
-              });
+              await this.ctx.addInitScript(this._clockFreezeInitScript());
               this.page = await this.ctx.newPage();
               this._xvfb = xvfb;
 
               this.gpuStatus = await verifyGpu(this.page, this.logger);
               if (this.gpuStatus.gpuActive) {
                 this.logger.info(
-                  "✓ Xvfb fallback successful — GPU is now active",
+                  "Xvfb fallback successful — GPU is now active",
                   { glRenderer: this.gpuStatus.glRenderer },
                 );
               } else {
@@ -147,11 +188,16 @@ class PlaywrightRenderer extends Renderer {
               }
             } catch (e) {
               this.logger.error("Xvfb relaunch failed", { err: e.message });
-              this.browser = await chromium.launch(launchOpts);
+              this.browser = await chromium.launch({
+                args,
+                headless: true,
+                executablePath,
+              });
               this.ctx = await this.browser.newContext({
                 viewport: { width: captureW, height: captureH },
                 deviceScaleFactor: dsf,
               });
+              await this.ctx.addInitScript(this._clockFreezeInitScript());
               this.page = await this.ctx.newPage();
             }
           }
@@ -197,7 +243,10 @@ class PlaywrightRenderer extends Renderer {
       }, themeObj.toCssVars());
     }
 
-    // Force consistent 1080x1920 styling
+    // Pin #stageWrap and #viewport to native 1080x1920 with NO transform.
+    // This is the renderer-side counterpart to the scene's fitStage() guard —
+    // the scene disables its JS scaler in render mode, and we hard-pin here
+    // with !important so any lingering inline style is overridden.
     await this.page.addStyleTag({
       content: `
         html, body, #viewport {
@@ -225,8 +274,10 @@ class PlaywrightRenderer extends Renderer {
       `,
     });
 
-    // Disable CSS animations, CSS transitions, and layout filters to prevent timeline lag.
-    // Preserves background visual meshes and film grain elements.
+    // Kill all CSS transitions and CSS @keyframe animations.
+    // Discrete seeking does NOT advance CSS transitions; if they were left
+    // active, every captured frame would catch them at an arbitrary real-world
+    // phase offset, producing ghosting / partial-paint jitter.
     if (process.env.FORGE_FAST_MODE !== "0") {
       await this.page.addStyleTag({
         content: `
@@ -244,7 +295,29 @@ class PlaywrightRenderer extends Renderer {
       });
     }
 
+    // Wait for all webfonts to actually load before doing anything else.
+    // Without this, the first ~10 frames can render with the fallback font
+    // and then "snap" to the real font once it arrives — a very visible
+    // layout shift.
     await this.page.evaluate(() => document.fonts.ready);
+
+    // After fonts are loaded and the scene script has executed, put GSAP's
+    // ticker to sleep and pause its global timeline. The scene file also
+    // does this in its own `if (window.renderMode)` block, but we re-assert
+    // here to be defensive against scene-load ordering quirks.
+    await this.page.evaluate(() => {
+      if (typeof window.gsap !== "undefined") {
+        try {
+          window.gsap.ticker.lagSmoothing(0);
+          window.gsap.ticker.sleep();
+          window.gsap.globalTimeline.pause();
+        } catch (e) {
+          /* ignore — scene may not have a global timeline yet */
+        }
+      }
+    });
+
+    // Prime the very first frame at t=0 and let the compositor settle.
     await this.page.evaluate((t) => window.renderAtTime(t), 0);
     await this.page.waitForTimeout(300);
 
@@ -271,11 +344,30 @@ class PlaywrightRenderer extends Renderer {
     const timeScale = this.config.get("timeScale");
     const sceneT = t * timeScale;
 
-    // Recalculate styles and force browser layout synchronization
+    // Seek the timeline and force a SYNCHRONOUS layout + paint flush.
+    //
+    // Why the getComputedStyle + offsetHeight double-pump:
+    //   - `getComputedStyle(elem).opacity` forces a STYLE recalc.
+    //   - `document.body.offsetHeight` forces a LAYOUT recalc.
+    //   - Together they guarantee the GPU compositor has a fully-resolved
+    //     style tree to paint when the CDP screenshot lands on the next tick.
+    //
+    // Without this, Chrome may capture the screenshot before the paint thread
+    // has caught up with the seek() writes — producing partially-painted
+    // frames that look like stutter.
     await this.page.evaluate((tt) => {
       window.renderAtTime(tt);
-      // Synchronous style recalculation forces Chrome to align GPU paints with manual seek styles
-      return window.getComputedStyle(document.body).opacity;
+
+      // Style recalc
+      window.getComputedStyle(document.body).opacity;
+      // Layout recalc
+      // eslint-disable-next-line no-unused-expressions
+      document.body.offsetHeight;
+      // Force the document element to flush too
+      // eslint-disable-next-line no-unused-expressions
+      document.documentElement.offsetHeight;
+
+      return true;
     }, sceneT);
 
     const fmt = this.config.get("frameFormat");
