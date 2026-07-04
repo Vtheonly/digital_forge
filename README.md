@@ -120,13 +120,39 @@ If you have an NVIDIA GPU (Colab T4, local RTX, etc.), render 5-20x faster:
 
 ```bash
 node bin/forge-render scenes/digital-forge-reel-en.html \
-    --gpu --encoder nvenc \
+    --gpu --encoder nvenc --workers 4 \
     --output output/en-gpu.mp4 \
     --music audio/forge_theme.wav
 ```
 
 - `--gpu` → enables GPU rasterization in Chrome (faster page compositing)
 - `--encoder nvenc` → uses NVIDIA's hardware H.264 encoder
+- `--workers 4` → 4 parallel Chrome processes for capture (matches Colab's 4 vCPUs)
+
+### ⚠️ Important: Verify GPU is actually being used
+
+If you see `0% GPU utilization` in `nvidia-smi` during render, Chrome silently
+fell back to SwiftShader (CPU rasterization). This is a common bug caused by
+Chrome flag changes. Run the diagnostic:
+
+```bash
+node bin/forge-gpu-check --scene scenes/digital-forge-reel-en.html
+```
+
+This checks every layer of the GPU pipeline (drivers, ffmpeg, Chrome flags,
+chrome://gpu status, sample render) and tells you exactly what's wrong if
+anything is amiss. See **[docs/GPU_FIX.md](docs/GPU_FIX.md)** for the full
+diagnosis of the silent SwiftShader fallback bug and how it was fixed.
+
+### Benchmark CPU vs GPU
+
+```bash
+node bin/forge-benchmark scenes/digital-forge-reel-en.html --frames 30
+```
+
+Renders 30 frames under 4 configurations (CPU baseline, GPU raster only,
+CPU + parallel, full GPU pipeline) and writes a JSON file with timing +
+GPU utilization stats.
 
 See **[docs/GPU.md](docs/GPU.md)** for VAAPI/QSV/VideoToolbox variants.
 
@@ -138,7 +164,11 @@ See **[docs/GPU.md](docs/GPU.md)** for VAAPI/QSV/VideoToolbox variants.
 | `--target-fps <n>` | 60 | Output frame rate (after interpolation) |
 | `--scale <0.1-4>` | 1.0 | Capture scale. 0.5 = half-res (fast), 1.0 = native, 2.0 = 4K |
 | `--encoder <auto\|cpu\|nvenc\|vaapi\|qsv\|videotoolbox>` | auto | Video encoder |
-| `--gpu` | off | Enable Chrome GPU rasterization |
+| `--gpu` | off | Enable Chrome GPU rasterization (Chrome 131+ compatible flags) |
+| `--workers <n>` | 0 (auto) | Parallel Chrome processes for capture (0 = cpus/2, max 4) |
+| `--no-verify-gpu` | off | Skip chrome://gpu verification (faster startup, less safe) |
+| `--no-gpu-monitor` | off | Disable nvidia-smi sampling during render |
+| `--no-nvenc-hwupload` | off | Use CPU filter chain instead of hwupload_cuda |
 | `--theme <path>` | null | Theme file (themes/X.js) — injects colors/fonts/motion as CSS vars |
 | `--crf <0-51>` | 18 | Quality (lower = better, 18 = visually lossless) |
 | `--interpolate <dup\|mi>` | dup | Frame interpolation (`mi` = minterpolate, smoother but slow) |
@@ -150,6 +180,7 @@ See **[docs/GPU.md](docs/GPU.md)** for VAAPI/QSV/VideoToolbox variants.
 
 ## Documentation
 
+- **[docs/GPU_FIX.md](docs/GPU_FIX.md)** — ⭐ **GPU pipeline fix diagnosis & resolution** (start here if GPU isn't being used)
 - **[docs/INSTALL.md](docs/INSTALL.md)** — installation for every platform
 - **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — how the pipeline works
 - **[docs/NEW-VIDEO-EXTENSION.md](docs/NEW-VIDEO-EXTENSION.md)** — **build a completely new video format** ⭐

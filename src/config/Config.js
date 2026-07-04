@@ -43,6 +43,7 @@ const DEFAULTS = {
   audioBitrate:    '192k',
   scaleFilter:     'lanczos',               // upscaler: lanczos | bicubic | bilinear
   interpolate:     'duplicate',             // 'duplicate' (fast) | 'minterpolate' (smooth but slow)
+  nvencHwupload:   true,                    // NVENC: use hwupload_cuda to keep frames on GPU
 
   // ===== Audio =====
   musicPath:       null,                    // path to wav/mp3
@@ -54,6 +55,13 @@ const DEFAULTS = {
   // ===== GPU =====
   useGpu:          false,                   // pass --enable-gpu to Chrome for capture
   gpuRenderer:     null,                    // override chrome --use-gl flag
+  verifyGpu:       true,                    // verify chrome://gpu shows HW acceleration
+  gpuMonitor:      true,                    // sample nvidia-smi during render
+  gpuMonitorIntervalMs: 1000,               // nvidia-smi sample interval
+
+  // ===== Parallel capture =====
+  workers:         0,                       // 0 = auto (cpus/2, capped at 4); 1 = serial; 2+ = parallel
+  workerStartTimeoutMs: 60000,              // per-worker init timeout
 
   // ===== Behavior =====
   logLevel:        'info',
@@ -138,6 +146,12 @@ class Config {
     if (!['duplicate', 'minterpolate'].includes(c.interpolate)) {
       throw new ConfigError(`interpolate must be duplicate|minterpolate, got ${c.interpolate}`);
     }
+    if (!Number.isInteger(c.workers) || c.workers < 0 || c.workers > 32) {
+      throw new ConfigError(`workers must be an integer 0-32 (0=auto), got ${c.workers}`);
+    }
+    if (typeof c.verifyGpu !== 'boolean') {
+      throw new ConfigError(`verifyGpu must be boolean, got ${c.verifyGpu}`);
+    }
 
     // Auto-detect encoder if requested
     if (c.encoder === 'auto') {
@@ -146,6 +160,14 @@ class Config {
       else if (e.isMac) c.encoder = 'videotoolbox';
       else if (e.hasVaapi) c.encoder = 'vaapi';
       else c.encoder = 'cpu';
+    }
+
+    // Auto-select worker count when workers=0 (auto) — use # of CPU cores
+    // but cap at 4 to avoid GPU VRAM contention on small cards like T4.
+    // The user can override with --workers N.
+    if (c.workers === 0) {
+      const e = env.detect();
+      c.workers = Math.max(1, Math.min(4, Math.floor(e.cpus / 2)));
     }
   }
 
@@ -190,7 +212,10 @@ class Config {
       encoder: c.encoder,
       crf: c.crf,
       interpolate: c.interpolate,
-      useGpu: c.useGpu
+      useGpu: c.useGpu,
+      verifyGpu: c.verifyGpu,
+      workers: c.workers,
+      nvencHwupload: c.nvencHwupload
     };
   }
 }

@@ -1,0 +1,272 @@
+#!/usr/bin/env node
+/**
+ * forge-benchmark — Benchmark rendering speed: CPU vs GPU vs parallel
+ *
+ * Usage:
+ *   node bin/forge-benchmark <scene.html> [options]
+ *
+ * Options:
+ *   --output, -o <path>   Output JSON file with benchmark results
+ *                         (default: ./output/benchmark-<timestamp>.json)
+ *   --music <path>        Music track to use for the renders
+ *   --frames <n>          Max frames per benchmark run (default: 30, for speed)
+ *   --skip-cpu            Skip the CPU baseline benchmark (saves time)
+ *   --skip-parallel       Skip the parallel benchmark
+ *   --skip-gpu            Skip the GPU benchmark (e.g. on CPU-only runtime)
+ *   --workers <n>         Worker count for parallel benchmark (default: 0=auto)
+ *
+ * Runs three benchmarks:
+ *   1. CPU baseline: --encoder cpu (no --gpu, --workers 1)
+ *   2. GPU rasterization: --encoder cpu --gpu --workers 1
+ *      (Chrome GPU rasterization, but CPU encoding — isolates capture speedup)
+ *   3. Full GPU pipeline: --encoder nvenc --gpu --workers <auto>
+ *      (Chrome GPU + NVENC + parallel capture — the full fix)
+ *
+ * Each benchmark captures the same N frames so the visual output is
+ * comparable (frame diff can be run separately).
+ *
+ * Output is a JSON file with per-run stats: captureTime, encodeTime,
+ * totalTime, captureFps, gpuUtilizationAvg, gpuUtilizationPeak.
+ */
+
+const path = require('path');
+const fs = require('fs');
+const os = require('os');
+const { Logger } = require('../src/core/Logger');
+const { Config } = require('../src/config/Config');
+const { Pipeline } = require('../src/core/Pipeline');
+
+function parseArgs(argv) {
+  const opts = {
+    output: null,
+    music: null,
+    frames: 30,
+    skipCpu: false,
+    skipParallel: false,
+    skipGpu: false,
+    workers: 0,
+    logLevel: 'warn'
+  };
+  const positional = [];
+  for (let i = 2; i < argv.length; i++) {
+    const a = argv[i];
+    const next = () => {
+      if (i + 1 >= argv.length) throw new Error(`Option ${a} requires a value`);
+      return argv[++i];
+    };
+    switch (a) {
+      case '-o': case '--output': opts.output = next(); break;
+      case '--music': opts.music = next(); break;
+      case '--frames': opts.frames = parseInt(next(), 10); break;
+      case '--skip-cpu': opts.skipCpu = true; break;
+      case '--skip-parallel': opts.skipParallel = true; break;
+      case '--skip-gpu': opts.skipGpu = true; break;
+      case '--workers': opts.workers = parseInt(next(), 10); break;
+      case '--log-level': opts.logLevel = next(); break;
+      case '-h': case '--help':
+        console.log(fs.readFileSync(__filename, 'utf8')
+          .split('\n').filter(l => l.startsWith(' *')).map(l => l.slice(3)).join('\n'));
+        process.exit(0);
+      default:
+        if (a.startsWith('--')) throw new Error(`Unknown option: ${a}`);
+        positional.push(a);
+    }
+  }
+  if (positional.length === 0) {
+    console.log('Usage: node bin/forge-benchmark <scene.html> [options]');
+    process.exit(1);
+  }
+  opts.scene = path.resolve(positional[0]);
+  return opts;
+}
+
+async function runBenchmark(name, opts) {
+  const logger = new Logger({ level: opts.logLevel, name: 'bench' });
+  const tmpDir = path.join(os.tmpdir(), `forge-bench-${name}-${Date.now()}`);
+  fs.mkdirSync(tmpDir, { recursive: true });
+  const outPath = path.join(tmpDir, 'output.mp4');
+
+  const config = new Config({
+    htmlPath: opts.scene,
+    outputPath: outPath,
+    framesDir: path.join(tmpDir, 'frames'),
+    fps: opts.fps || 15,
+    targetFps: opts.targetFps || 30,  // lower target fps for benchmark speed
+    captureScale: 0.5,                // half-res for benchmark speed
+    width: 1080, height: 1920,
+    maxFrames: opts.frames,
+    resumeFromDisk: false,
+    cleanFramesAfterEncode: true,
+    musicPath: opts.music,
+    useGpu: opts.useGpu,
+    verifyGpu: opts.verifyGpu ?? false, // skip verification for benchmark speed
+    gpuMonitor: true,
+    encoder: opts.encoder,
+    workers: opts.workers,
+    nvencHwupload: opts.nvencHwupload ?? true,
+    logLevel: opts.logLevel
+  });
+
+  console.log(`\n=== Running benchmark: ${name} ===`);
+  console.log(`  encoder=${opts.encoder} gpu=${opts.useGpu} workers=${opts.workers} frames=${opts.frames}`);
+
+  const t0 = Date.now();
+  const pipeline = new Pipeline(config, logger);
+  let stats;
+  try {
+    stats = await pipeline.run();
+  } catch (e) {
+    console.log(`  ✗ FAILED: ${e.message}`);
+    return { name, status: 'failed', error: e.message, elapsedMs: Date.now() - t0 };
+  }
+  const elapsedMs = Date.now() - t0;
+
+  const result = {
+    name,
+    status: 'success',
+    config: {
+      encoder: opts.encoder,
+      useGpu: opts.useGpu,
+      workers: opts.workers,
+      frames: opts.frames,
+      captureScale: 0.5,
+      targetFps: opts.targetFps || 30
+    },
+    elapsedMs,
+    captureMs: (stats.captureEndedAt || 0) - (stats.captureStartedAt || 0),
+    encodeMs: (stats.encodeEndedAt || 0) - (stats.encodeStartedAt || 0),
+    framesCaptured: stats.framesCaptured,
+    framesSkipped: stats.framesSkipped,
+    finalSizeBytes: stats.finalSizeBytes,
+    captureFps: stats.framesCaptured > 0
+      ? +(stats.framesCaptured / (((stats.captureEndedAt || 0) - (stats.captureStartedAt || 0)) / 1000 || 1)).toFixed(2)
+      : 0,
+    gpuStats: stats.gpuStats
+  };
+
+  console.log(`  ✓ ${result.captureFps} fps capture, ${result.captureMs}ms capture, ${result.encodeMs}ms encode`);
+  if (result.gpuStats && result.gpuStats.active) {
+    const cap = result.gpuStats.byPhase.capture || {};
+    const enc = result.gpuStats.byPhase.encode || {};
+    console.log(`    GPU capture: avg ${cap.gpuUtilAvg || 0}% peak ${cap.gpuUtilPeak || 0}%`);
+    console.log(`    GPU encode:  avg ${enc.gpuUtilAvg || 0}% peak ${enc.gpuUtilPeak || 0}%`);
+  }
+
+  // Cleanup tmp dir
+  try { fs.rmSync(tmpDir, { recursive: true }); } catch { /* ignore */ }
+
+  return result;
+}
+
+async function main() {
+  const opts = parseArgs(process.argv);
+  if (!fs.existsSync(opts.scene)) {
+    console.error('Scene not found:', opts.scene);
+    process.exit(1);
+  }
+
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const outputPath = opts.output || path.join('output', `benchmark-${timestamp}.json`);
+
+  console.log('=== Digital Forge — Benchmark ===');
+  console.log(`Scene: ${opts.scene}`);
+  console.log(`Frames per run: ${opts.frames}`);
+  console.log(`Output: ${outputPath}`);
+
+  const results = {
+    timestamp: new Date().toISOString(),
+    scene: opts.scene,
+    framesPerRun: opts.frames,
+    platform: process.platform,
+    node: process.version,
+    runs: []
+  };
+
+  // Run 1: CPU baseline (no GPU, 1 worker)
+  if (!opts.skipCpu) {
+    results.runs.push(await runBenchmark('cpu-baseline', {
+      ...opts,
+      encoder: 'cpu',
+      useGpu: false,
+      workers: 1,
+      nvencHwupload: false
+    }));
+  }
+
+  // Run 2: GPU rasterization only (Chrome GPU, CPU encode, 1 worker)
+  // This isolates the impact of GPU rasterization in Chrome.
+  if (!opts.skipGpu) {
+    results.runs.push(await runBenchmark('gpu-raster-only', {
+      ...opts,
+      encoder: 'cpu',
+      useGpu: true,
+      workers: 1,
+      nvencHwupload: false
+    }));
+  }
+
+  // Run 3: Full GPU pipeline (Chrome GPU + NVENC + parallel capture)
+  if (!opts.skipGpu && !opts.skipParallel) {
+    results.runs.push(await runBenchmark('full-gpu-pipeline', {
+      ...opts,
+      encoder: 'nvenc',
+      useGpu: true,
+      workers: opts.workers,  // 0 = auto
+      nvencHwupload: true
+    }));
+  }
+
+  // Run 4: Parallel-only (no GPU) — to isolate parallelism speedup
+  if (!opts.skipCpu && !opts.skipParallel) {
+    results.runs.push(await runBenchmark('cpu-parallel', {
+      ...opts,
+      encoder: 'cpu',
+      useGpu: false,
+      workers: opts.workers,
+      nvencHwupload: false
+    }));
+  }
+
+  // === Summary ===
+  console.log('\n=== Benchmark Summary ===');
+  console.log('Name                   | Capture FPS | Capture Time | Encode Time | GPU Avg');
+  console.log('-----------------------|-------------|--------------|-------------|--------');
+  for (const r of results.runs) {
+    if (r.status !== 'success') {
+      console.log(`${r.name.padEnd(22)} | FAILED — ${r.error}`);
+      continue;
+    }
+    const gpuAvg = r.gpuStats?.active
+      ? ((r.gpuStats.byPhase.capture?.gpuUtilAvg || 0) + '%')
+      : 'n/a';
+    console.log(
+      `${r.name.padEnd(22)} | ` +
+      `${String(r.captureFps).padStart(11)} | ` +
+      `${(r.captureMs + 'ms').padStart(12)} | ` +
+      `${(r.encodeMs + 'ms').padStart(11)} | ` +
+      `${gpuAvg.padStart(7)}`
+    );
+  }
+
+  // Compute speedups vs CPU baseline
+  const baseline = results.runs.find(r => r.name === 'cpu-baseline' && r.status === 'success');
+  if (baseline) {
+    console.log('\nSpeedup vs CPU baseline:');
+    for (const r of results.runs) {
+      if (r.status !== 'success' || r.name === 'cpu-baseline') continue;
+      const speedup = baseline.captureMs / r.captureMs;
+      console.log(`  ${r.name}: ${speedup.toFixed(2)}x faster capture`);
+    }
+  }
+
+  // Write JSON
+  fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+  fs.writeFileSync(outputPath, JSON.stringify(results, null, 2));
+  console.log(`\nFull results written to: ${outputPath}`);
+}
+
+main().catch(e => {
+  console.error('Benchmark failed:', e.message);
+  console.error(e.stack);
+  process.exit(1);
+});

@@ -83,7 +83,7 @@ class PlaywrightRenderer extends Renderer {
       this.logger.info('GPU mode enabled', {
         hasNvidia: envInfo.hasNvidia,
         note: envInfo.hasNvidia
-          ? 'Chrome will use GPU rasterization (--headless=new + EGL)'
+          ? 'Chrome will use ANGLE/Vulkan GPU rasterization (Chrome 131+ compatible)'
           : 'No NVIDIA GPU detected — Chrome will fall back to software'
       });
     }
@@ -136,6 +136,7 @@ class PlaywrightRenderer extends Renderer {
       executablePath
     };
     this.logger.debug('Using Chromium binary', { path: executablePath });
+    this.logger.debug('Chromium launch args', { args });
 
     try {
       this.browser = await chromium.launch(launchOpts);
@@ -155,7 +156,54 @@ class PlaywrightRenderer extends Renderer {
       viewport: { width: captureW, height: captureH },
       deviceScaleFactor: dsf
     });
+
+    // === RENDER MODE ===
+    // Set window.renderMode = true BEFORE the scene's JS runs.
+    // The scene checks this flag to:
+    //   - Skip masterTL.play() (we drive the timeline via seek() instead)
+    //   - Stop requestAnimationFrame loops (we don't want real-time particle
+    //     updates between the seek and the screenshot — that would make
+    //     sparks/embers drift non-deterministically based on RAF timing)
+    // Without this, parallel workers produce slightly different output
+    // because each Chrome instance's RAF cycle is at a different point.
+    //
+    // We also stub performance.now() to return 0 during page load. Some
+    // scene code uses `performance.now()` as a fallback before masterTL
+    // is initialized, which would otherwise introduce non-determinism
+    // based on when the page finished loading.
+    await this.ctx.addInitScript(() => {
+      window.renderMode = true;
+      // Freeze performance.now at 0 during initial script execution so that
+      // any code that reads it before masterTL exists gets a deterministic
+      // value. We restore the real clock after a tick so animations that
+      // legitimately use it (none in render mode) still work.
+      const _realNow = performance.now.bind(performance);
+      let _frozen = true;
+      performance.now = () => _frozen ? 0 : _realNow();
+      // Unfreeze after 1s (well after scene init completes)
+      setTimeout(() => { _frozen = false; }, 1000);
+    });
+
     this.page = await this.ctx.newPage();
+
+    // === GPU VERIFICATION ===
+    // After browser launch, verify the GPU is actually being used.
+    // This catches the silent SwiftShader fallback that was the original bug.
+    if (c.get('useGpu') && c.get('verifyGpu')) {
+      const { verifyGpu } = require('../utils/GpuVerifier');
+      try {
+        this.gpuStatus = await verifyGpu(this.page, this.logger);
+        if (!this.gpuStatus.gpuActive) {
+          this.logger.warn(
+            '⚠️  GPU was requested but Chrome is using CPU rasterization (SwiftShader). ' +
+            'Render will work but be SLOW. See docs/GPU_FIX.md for troubleshooting.',
+            { glRenderer: this.gpuStatus.glRenderer }
+          );
+        }
+      } catch (e) {
+        this.logger.warn('GPU verification failed (non-fatal)', { err: e.message });
+      }
+    }
 
     // Wire up error logging
     this.page.on('pageerror', e => {
@@ -282,7 +330,10 @@ class PlaywrightRenderer extends Renderer {
     const fmt = this.config.get('frameFormat');
     const cdpOpts = {
       captureBeyondViewport: false,
-      fromSurface: true
+      fromSurface: true,
+      // ⚡ optimizeForSpeed: trade slightly larger JPEG for ~2x faster encode.
+      // This is the single most useful CDP screenshot flag for video pipelines.
+      optimizeForSpeed: true
     };
 
     if (fmt === 'jpeg') {

@@ -18,6 +18,17 @@
  *     to libx264 CRF 18 but ~10x faster.
  *   - preset: p1 (fastest) to p7 (highest quality). Default p4.
  *
+ * HWUPLOAD_CUDA (frame upload optimization)
+ * -----------------------------------------
+ *   When config.nvencHwupload is true (default), we prepend `hwupload_cuda`
+ *   to the filter chain. This uploads each decoded frame to GPU memory ONCE;
+ *   subsequent GPU filters (scale_npp) and the NVENC encoder then operate
+ *   entirely in VRAM, avoiding per-frame CPU↔GPU round-trips.
+ *
+ *   This matters most when capturing at a lower resolution than the output
+ *   (e.g. --scale 0.5 captures 540×960 but the output is 1080×1920). With
+ *   hwupload_cuda + scale_npp, the upscale happens on the GPU.
+ *
  * TROUBLESHOOTING
  * ---------------
  *   "No capable devices found" → drivers missing or GPU in use by another process
@@ -75,7 +86,10 @@ class NVENCEncoder extends Encoder {
       '-rc-lookahead', '20'
     ];
 
-    const filterArgs = this._videoFilterArgs();
+    // Build filter chain. When hwupload is enabled, we upload frames to GPU
+    // once and use scale_npp (GPU scaler) instead of CPU scale.
+    const filterArgs = this._nvencVideoFilterArgs();
+
     const audioArgs = audioPath ? this._audioArgs(audioPath) : ['-an'];
     const outputArgs = [
       ...this._outputArgs(),
@@ -87,7 +101,9 @@ class NVENCEncoder extends Encoder {
 
     this.logger.info('Encoding with h264_nvenc (NVIDIA GPU)', {
       frames: frameCount,
-      preset, cq, gpu: 'auto-selected'
+      preset, cq,
+      hwupload: c.get('nvencHwupload'),
+      gpu: 'auto-selected'
     });
     this.logger.debug('ffmpeg cmd', { cmd: fullArgs.join(' ') });
 
@@ -112,6 +128,79 @@ class NVENCEncoder extends Encoder {
     });
 
     return { path: outputPath, sizeBytes, durationSec };
+  }
+
+  /**
+   * NVENC-specific filter chain.
+   *
+   * When `nvencHwupload` is enabled (default), we use:
+   *   - hwupload_cuda: upload decoded frame from CPU to GPU VRAM
+   *   - scale_npp: GPU-accelerated scaler (replaces CPU `scale` filter)
+   *   - format=yuv420p: pixel format on GPU
+   *
+   * When disabled (or hwupload not available), we fall back to the standard
+   * CPU filter chain from the parent class.
+   *
+   * Frame interpolation (minterpolate) is always done on CPU — there's no
+   * GPU equivalent in ffmpeg.
+   */
+  _nvencVideoFilterArgs() {
+    const c = this.config;
+    const filters = [];
+
+    const captureScale = c.get('captureScale');
+    const targetFps = c.get('targetFps');
+    const sourceFps = c.get('fps');
+    const useHwupload = c.get('nvencHwupload');
+
+    if (useHwupload) {
+      // === GPU pipeline ===
+      // Upload to VRAM first, then do all subsequent work on GPU.
+      filters.push('hwupload_cuda');
+
+      // GPU scale (only if capture was at lower res than output)
+      if (captureScale !== 1.0) {
+        const w = c.get('width');
+        const h = c.get('height');
+        // scale_npp uses the same algorithm names as the CPU `scale` filter
+        // for the most part, but only supports a subset. lanczos is supported.
+        const alg = c.get('scaleFilter') === 'lanczos' ? 'lanczos'
+                  : c.get('scaleFilter') === 'bicubic' ? 'bicubic'
+                  : c.get('scaleFilter') === 'bilinear' ? 'bilinear'
+                  : 'lanczos';
+        filters.push(`scale_npp=${w}:${h}:format=yuv420p:interp=${alg}`);
+      } else {
+        // Even without scaling, force yuv420p pixel format on GPU
+        filters.push('format=yuv420p');
+      }
+
+      // Frame interpolation (CPU-only — done via hwdownload/hwupload)
+      if (c.get('interpolate') === 'minterpolate' && targetFps > sourceFps) {
+        // minterpolate is CPU-only — download, interpolate, upload again
+        filters.push('hwdownload', 'format=yuv420p');
+        filters.push(`minterpolate=fps=${targetFps}:mi_mode=mci:mc_mode=aobmc:vsbmc=1`);
+        filters.push('hwupload_cuda');
+      } else if (targetFps !== sourceFps) {
+        // fps filter is cheap, runs fine on CPU
+        filters.push('hwdownload', 'format=yuv420p');
+        filters.push(`fps=${targetFps}`);
+        filters.push('hwupload_cuda');
+      }
+    } else {
+      // === CPU pipeline (fallback) ===
+      if (captureScale !== 1.0) {
+        const w = c.get('width');
+        const h = c.get('height');
+        filters.push(`scale=${w}:${h}:flags=${c.get('scaleFilter')}`);
+      }
+      if (c.get('interpolate') === 'minterpolate' && targetFps > sourceFps) {
+        filters.push(`minterpolate=fps=${targetFps}:mi_mode=mci:mc_mode=aobmc:vsbmc=1`);
+      } else if (targetFps !== sourceFps) {
+        filters.push(`fps=${targetFps}`);
+      }
+    }
+
+    return filters.length ? ['-vf', filters.join(',')] : [];
   }
 
   /**
@@ -143,6 +232,25 @@ class NVENCEncoder extends Encoder {
         'nvidia-smi failed — GPU not accessible. Make sure you\'re on a GPU runtime.',
         { cause: e }
       );
+    }
+
+    // If hwupload_cuda is requested, verify it's available in this ffmpeg build
+    if (this.config.get('nvencHwupload')) {
+      try {
+        const { stdout } = await exec(['ffmpeg', '-hide_banner', '-filters']);
+        if (!stdout.includes('hwupload_cuda') || !stdout.includes('scale_npp')) {
+          this.logger.warn(
+            'ffmpeg lacks hwupload_cuda or scale_npp filters — falling back to CPU filter chain. ' +
+            'Install ffmpeg with CUDA support to enable hardware frame upload.'
+          );
+          // Disable hwupload for this run
+          this.config.set('nvencHwupload', false);
+        }
+      } catch (e) {
+        this.logger.warn('Could not verify hwupload_cuda availability — trying anyway', {
+          err: e.message
+        });
+      }
     }
   }
 }

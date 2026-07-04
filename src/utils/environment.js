@@ -209,6 +209,28 @@ function _findPlaywrightChromiumInDir(cacheDir) {
  *   (not set)        → disable GPU (software rasterizer, more reliable for headless)
  *
  * The renderer sets FORGE_USE_GPU=1 when the --gpu CLI flag is passed.
+ *
+ * ⚠️  CRITICAL BUG FIX (Chrome 131+, affects Colab T4 as of 2024-2025)
+ * ---------------------------------------------------------------
+ * The previous implementation passed `--use-gl=egl` on Linux+NVIDIA. That
+ * flag is REJECTED by Chrome 131+ headless shell (the gpu_factory allowlist
+ * now only accepts `gl=egl-angle, angle=default`), which causes the GPU
+ * process to exit and Chrome to *silently* fall back to SwiftShader — a
+ * CPU-based software rasterizer that pretends to be a GPU.
+ *
+ * Symptom: `--gpu` is passed, no error is raised, but `nvidia-smi` shows
+ * 0% utilization during capture and the entire render runs on the CPU.
+ *
+ * Fix: use `--use-gl=angle --use-angle=vulkan --enable-features=Vulkan
+ * --disable-vulkan-surface` (the modern, Chrome-131+-compatible GPU stack
+ * verified on Colab T4/V100 by the Chrome team and multiple 2025 reports).
+ * Also add `--disable-software-rasterizer` so any future fallback FAILS
+ * LOUDLY instead of silently degrading to SwiftShader.
+ *
+ * References:
+ *   - https://github.com/heygen-com/hyperframes/issues/1493
+ *   - https://developer.chrome.com/blog/supercharge-web-ai-testing
+ *   - https://chromium.googlesource.com/chromium/src/+/main/docs/gpu/swiftshader.md
  */
 function recommendedChromiumArgs() {
   const envInfo = detect();
@@ -240,17 +262,55 @@ function recommendedChromiumArgs() {
 
   // GPU flag: check the FORGE_USE_GPU env var (set by renderer when --gpu is passed)
   if (process.env.FORGE_USE_GPU === '1') {
-    // GPU mode: don't add --disable-gpu, add GPU acceleration flags instead
+    // === GPU RASTERIZATION (Chrome 131+ compatible) ===
+    // Always-on flags:
     args.push(
-      '--enable-gpu-rasterization',
-      '--ignore-gpu-blocklist'
+      '--enable-gpu-rasterization',  // Allow Skia GPU backend for layer tiles
+      '--ignore-gpu-blocklist',      // Don't let Chrome's blocklist disable GPU
+      '--headless=new'               // New headless mode (old --headless forces software)
     );
-    // On Linux headless with NVIDIA, EGL is the right GL backend
+
     if (envInfo.isLinux && envInfo.hasNvidia) {
-      args.push('--use-gl=egl', '--enable-features=Vulkan');
+      // ✅ CORRECT GPU stack for Chrome 131+ on Linux + NVIDIA (Colab T4/V100/L4):
+      //    - --use-gl=angle           : ANGLE translates GLES to a backend
+      //    - --use-angle=vulkan       : Use Vulkan as the ANGLE backend (NVIDIA Vulkan ICD)
+      //    - --enable-features=Vulkan : Enable Vulkan for compositing + rasterization
+      //    - --disable-vulkan-surface : Use bitblt present (no VK_KHR_surface, headless-safe)
+      //    - --disable-software-rasterizer : FAIL LOUDLY instead of silent SwiftShader fallback
+      //    - --allow-chrome-scheme-url : Allow navigation to chrome://gpu for verification
+      //
+      // ❌ DO NOT USE --use-gl=egl — it's rejected by Chrome 131+ headless shell
+      //    and causes silent SwiftShader (CPU) fallback. See file header.
+      args.push(
+        '--use-gl=angle',
+        '--use-angle=vulkan',
+        '--enable-features=Vulkan',
+        '--disable-vulkan-surface',
+        '--disable-software-rasterizer',
+        '--allow-chrome-scheme-url'
+      );
+    } else if (envInfo.isLinux && (envInfo.hasVaapi || envInfo.hasQsv)) {
+      // Intel/AMD GPU via ANGLE EGL backend
+      args.push(
+        '--use-gl=angle',
+        '--use-angle=gl',
+        '--disable-software-rasterizer',
+        '--allow-chrome-scheme-url'
+      );
+    } else if (envInfo.isMac) {
+      // macOS — Metal-backed ANGLE is the default
+      args.push(
+        '--use-gl=angle',
+        '--use-angle=metal',
+        '--allow-chrome-scheme-url'
+      );
+    } else {
+      // Unknown GPU — try ANGLE default backend, allow software fallback
+      args.push(
+        '--use-gl=angle',
+        '--allow-chrome-scheme-url'
+      );
     }
-    // Use new headless mode — old --headless forces software rendering
-    args.push('--headless=new');
   } else {
     // CPU mode: software rasterizer (more reliable for headless capture)
     args.push('--disable-gpu', '--headless');

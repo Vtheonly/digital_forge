@@ -1,24 +1,33 @@
 /**
  * rendererFactory.js — Picks the right renderer based on config
  *
- * Currently only PlaywrightRenderer is implemented (it's the only
- * browser-based frame capturer), but the factory makes it easy to
- * add alternatives (Puppeteer, headless Chrome CDP direct, etc.)
+ * Two concrete renderers:
+ *   - PlaywrightRenderer          — single-process serial capture
+ *   - ParallelPlaywrightRenderer  — multi-process parallel capture
+ *
+ * The parallel renderer is selected automatically when config.workers > 1
+ * (or workers == 0 + auto-detected > 1). Otherwise we use the simpler
+ * serial renderer.
  */
 
 const { PlaywrightRenderer } = require('../renderers/PlaywrightRenderer');
+const { ParallelPlaywrightRenderer } = require('../renderers/ParallelPlaywrightRenderer');
 const { ConfigError } = require('../utils/errors');
+const env = require('../utils/environment');
 
 function createRenderer(config, logger) {
-  // For now there's only one renderer. The factory exists so we can add
-  // more later (e.g. PuppeteerRenderer, SeleniumRenderer) without
-  // changing the pipeline.
-  switch ('playwright') {
-    case 'playwright':
-      return new PlaywrightRenderer(config, logger);
-    default:
-      throw new ConfigError(`Unknown renderer type`);
+  const requested = config.get('workers');
+  // Resolve auto (0) — mirrors Config.js logic
+  let workers = requested;
+  if (workers === 0) {
+    const e = env.detect();
+    workers = Math.max(1, Math.min(4, Math.floor(e.cpus / 2)));
   }
+
+  if (workers > 1) {
+    return new ParallelPlaywrightRenderer(config, logger);
+  }
+  return new PlaywrightRenderer(config, logger);
 }
 
 module.exports = { createRenderer };

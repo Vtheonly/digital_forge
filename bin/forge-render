@@ -15,6 +15,10 @@
  *   --encoder <cpu|nvenc|vaapi|qsv|videotoolbox|auto>
  *                              Encoder to use (default: auto)
  *   --gpu                      Enable GPU rasterization in Chrome (use this on GPU runtimes)
+ *   --no-verify-gpu            Skip chrome://gpu verification (faster startup, less safe)
+ *   --no-gpu-monitor           Disable nvidia-smi sampling during render
+ *   --workers <n>              Number of parallel Chrome processes (default: 0 = auto, max 32)
+ *   --no-nvenc-hwupload        Disable NVENC hwupload_cuda (use CPU filter chain)
  *   --music <path>             Background music WAV/MP3 (skipped if not provided)
  *   --generate-music           Auto-generate music if --music not given
  *   --theme <path>             Theme file (themes/X.js or .json) — injects CSS vars + window.theme
@@ -36,6 +40,9 @@
  *
  *   # GPU-accelerated capture + NVENC encode (Colab GPU runtime)
  *   node bin/forge-render scenes/digital-forge-reel-en.html --gpu --encoder nvenc -o output/en.mp4
+ *
+ *   # Maximum parallelism: 4 Chrome workers + GPU rasterization + NVENC
+ *   node bin/forge-render scenes/digital-forge-reel-en.html --gpu --encoder nvenc --workers 4 -o output/en.mp4
  *
  *   # Half-res capture (fast, lower quality)
  *   node bin/forge-render scenes/digital-forge-reel-en.html --scale 0.5 -o output/en.mp4
@@ -69,6 +76,10 @@ function parseArgs(argv) {
     resumeFromDisk: true,
     cleanFramesAfterEncode: true,
     useGpu: false,
+    verifyGpu: true,
+    gpuMonitor: true,
+    workers: 0,
+    nvencHwupload: true,
     generateMusic: false,
     logLevel: 'info',
     setup: false
@@ -91,6 +102,10 @@ function parseArgs(argv) {
       case '--height': opts.height = parseInt(next(), 10); break;
       case '--encoder': opts.encoder = next(); break;
       case '--gpu': opts.useGpu = true; break;
+      case '--no-verify-gpu': opts.verifyGpu = false; break;
+      case '--no-gpu-monitor': opts.gpuMonitor = false; break;
+      case '--workers': opts.workers = parseInt(next(), 10); break;
+      case '--no-nvenc-hwupload': opts.nvencHwupload = false; break;
       case '--music': opts.musicPath = next(); break;
       case '--generate-music': opts.generateMusic = true; break;
       case '--theme': opts.theme = next(); break;
