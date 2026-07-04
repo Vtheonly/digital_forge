@@ -63,6 +63,22 @@ const DEFAULTS = {
   workers:         0,                       // 0 = auto (cpus/2, capped at 4); 1 = serial; 2+ = parallel
   workerStartTimeoutMs: 60000,              // per-worker init timeout
 
+  // ===== Time scaling (animation slow-down) =====
+  // Scales the animation timeline by this factor during capture.
+  //   timeScale=1.0 → normal speed (30s animation captured at 30fps = 900 frames)
+  //   timeScale=0.5 → 2x slower (30s animation becomes 60s, captured at 15fps = 900 frames)
+  //   timeScale=0.25 → 4x slower (30s animation becomes 120s, captured at 7.5fps = 900 frames)
+  //
+  // WHY THIS HELPS:
+  //   - The output video plays at NORMAL speed (we speed it back up in ffmpeg)
+  //   - But we capture FEWER frames per second of animation
+  //   - Each frame still takes the same time to render, but there are fewer of them
+  //   - Net effect: total render time drops by 1/timeScale (e.g. 0.5 = 2x faster render)
+  //
+  // Use case: if your scene is 30s at 30fps (900 frames), use --time-scale 0.5 --fps 15
+  // to capture only 450 frames. The output video is still 30s at 30fps after speed-up.
+  timeScale:       1.0,
+
   // ===== Behavior =====
   logLevel:        'info',
   logFile:         null,                    // optional log file path
@@ -152,6 +168,9 @@ class Config {
     if (typeof c.verifyGpu !== 'boolean') {
       throw new ConfigError(`verifyGpu must be boolean, got ${c.verifyGpu}`);
     }
+    if (c.timeScale < 0.1 || c.timeScale > 4) {
+      throw new ConfigError(`timeScale must be 0.1-4, got ${c.timeScale}`);
+    }
 
     // Auto-detect encoder if requested
     if (c.encoder === 'auto') {
@@ -209,6 +228,7 @@ class Config {
       captureFps: c.fps,
       outputFps: c.targetFps,
       captureScale: c.captureScale,
+      timeScale: c.timeScale,
       encoder: c.encoder,
       crf: c.crf,
       interpolate: c.interpolate,

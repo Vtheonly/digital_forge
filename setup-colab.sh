@@ -56,6 +56,7 @@ sudo apt-get install -y -qq \
   libpango-1.0-0 libcairo2 libgdk-pixbuf-2.0-0 \
   libvulkan1 \
   vulkan-tools \
+  xvfb \
   ffmpeg 2>/dev/null
 
 # Install NVIDIA GL libraries (version matches the driver — try 525 first, fall back to others)

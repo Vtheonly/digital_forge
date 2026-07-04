@@ -136,13 +136,42 @@ feature says "Hardware accelerated", the renderer logs a loud warning:
 
 ```
 ⚠️  GPU was requested but Chrome is using CPU rasterization (SwiftShader).
-    Render will work but be SLOW. See docs/GPU_FIX.md for troubleshooting.
+    Will try Xvfb (headed) fallback...
 ```
 
 A secondary probe via `WebGL UNMASKED_RENDERER_WEBGL` provides a
 cross-check that doesn't depend on `chrome://gpu` rendering correctly.
 
-You can disable verification with `--no-verify-gpu` (saves ~3s startup).
+### Layer 2b: Xvfb headed fallback (`XvfbFallback.js`)
+
+**This layer was added after discovering that on some Colab images —
+notably those with newer NVIDIA drivers (580+) — the headless GPU flags
+don't engage even when everything is configured correctly.**
+
+When the GPU verifier detects SwiftShader, the renderer automatically:
+
+1. Starts an Xvfb server on display `:99` (1920×1080×24)
+2. Closes the headless Chrome
+3. Relaunches Chrome in **HEADED mode** (`headless: false`) with `DISPLAY=:99`
+4. Re-runs the GPU verification
+
+This works because Chrome's headed GPU pipeline has better driver support
+than the headless GPU factory. According to the Promaton and Dave Snider
+blogs (2025), this is the **most reliable GPU activation path** on Linux
+servers with NVIDIA GPUs.
+
+If Xvfb isn't installed, the renderer logs a warning and continues with
+SwiftShader (the render still works, just slowly). Install Xvfb with:
+
+```bash
+apt install -y xvfb
+```
+
+The fallback is fully automatic — no user action required beyond
+installing Xvfb (which `setup-colab.sh` now does by default).
+
+You can disable verification (and thus the Xvfb fallback) with
+`--no-verify-gpu`, but this is not recommended.
 
 ### Layer 3: Parallel capture (`ParallelPlaywrightRenderer.js`)
 

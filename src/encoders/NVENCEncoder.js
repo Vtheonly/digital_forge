@@ -152,6 +152,7 @@ class NVENCEncoder extends Encoder {
     const targetFps = c.get('targetFps');
     const sourceFps = c.get('fps');
     const useHwupload = c.get('nvencHwupload');
+    const timeScale = c.get('timeScale');
 
     if (useHwupload) {
       // === GPU pipeline ===
@@ -174,6 +175,16 @@ class NVENCEncoder extends Encoder {
         filters.push('format=yuv420p');
       }
 
+      // Time-scale speed-up (must be done on CPU after hwdownload because
+      // setpts is a CPU filter; for typical timeScale=0.5 the speedup is 2x
+      // and the cost is negligible vs. the capture savings)
+      if (timeScale !== 1.0) {
+        const speedup = 1 / timeScale;
+        filters.push('hwdownload', 'format=yuv420p');
+        filters.push(`setpts=PTS/${speedup}`);
+        filters.push('hwupload_cuda');
+      }
+
       // Frame interpolation (CPU-only — done via hwdownload/hwupload)
       if (c.get('interpolate') === 'minterpolate' && targetFps > sourceFps) {
         // minterpolate is CPU-only — download, interpolate, upload again
@@ -188,6 +199,11 @@ class NVENCEncoder extends Encoder {
       }
     } else {
       // === CPU pipeline (fallback) ===
+      // Time-scale speed-up
+      if (timeScale !== 1.0) {
+        const speedup = 1 / timeScale;
+        filters.push(`setpts=PTS/${speedup}`);
+      }
       if (captureScale !== 1.0) {
         const w = c.get('width');
         const h = c.get('height');

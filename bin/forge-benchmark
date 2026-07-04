@@ -99,7 +99,7 @@ async function runBenchmark(name, opts) {
     cleanFramesAfterEncode: true,
     musicPath: opts.music,
     useGpu: opts.useGpu,
-    verifyGpu: opts.verifyGpu ?? false, // skip verification for benchmark speed
+    verifyGpu: opts.verifyGpu ?? true,  // ← enables Xvfb fallback (critical for GPU benchmarks)
     gpuMonitor: true,
     encoder: opts.encoder,
     workers: opts.workers,

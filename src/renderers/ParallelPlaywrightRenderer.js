@@ -239,6 +239,7 @@ class ParallelPlaywrightRenderer extends Renderer {
         '--jpeg-quality', String(c.get('jpegQuality')),
         '--use-gpu', c.get('useGpu') ? '1' : '0',
         '--verify-gpu', c.get('verifyGpu') ? '1' : '0',
+        '--time-scale', String(c.get('timeScale')),
         '--theme', c.get('theme') || '',
         '--executable-path', c.get('executablePath') || '',
         '--browser-args', c.get('browserArgs') ? JSON.stringify(c.get('browserArgs')) : '',

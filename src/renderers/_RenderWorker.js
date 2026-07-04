@@ -41,6 +41,7 @@ function parseArgs(argv) {
       case '--jpeg-quality': opts.jpegQuality = parseInt(next(), 10); break;
       case '--use-gpu': opts.useGpu = next() === '1'; break;
       case '--verify-gpu': opts.verifyGpu = next() === '1'; break;
+      case '--time-scale': opts.timeScale = parseFloat(next()); break;
       case '--theme': opts.theme = next() || null; break;
       case '--executable-path': opts.executablePath = next() || null; break;
       case '--browser-args': {
@@ -106,6 +107,7 @@ async function main() {
     jpegQuality: opts.jpegQuality,
     useGpu: opts.useGpu,
     verifyGpu: opts.verifyGpu,
+    timeScale: opts.timeScale || 1.0,
     theme: opts.theme,
     executablePath: opts.executablePath,
     browserArgs: opts.browserArgs,

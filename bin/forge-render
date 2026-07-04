@@ -19,6 +19,10 @@
  *   --no-gpu-monitor           Disable nvidia-smi sampling during render
  *   --workers <n>              Number of parallel Chrome processes (default: 0 = auto, max 32)
  *   --no-nvenc-hwupload        Disable NVENC hwupload_cuda (use CPU filter chain)
+ *   --time-scale <0.1-4>       Slow down animation by this factor during capture (default: 1.0)
+ *                              0.5 = 2x slower (capture half as many frames, speed back up in ffmpeg)
+ *                              0.25 = 4x slower (capture quarter as many frames)
+ *                              The output video plays at NORMAL speed — only the capture is slowed.
  *   --music <path>             Background music WAV/MP3 (skipped if not provided)
  *   --generate-music           Auto-generate music if --music not given
  *   --theme <path>             Theme file (themes/X.js or .json) — injects CSS vars + window.theme
@@ -80,6 +84,7 @@ function parseArgs(argv) {
     gpuMonitor: true,
     workers: 0,
     nvencHwupload: true,
+    timeScale: 1.0,
     generateMusic: false,
     logLevel: 'info',
     setup: false
@@ -106,6 +111,7 @@ function parseArgs(argv) {
       case '--no-gpu-monitor': opts.gpuMonitor = false; break;
       case '--workers': opts.workers = parseInt(next(), 10); break;
       case '--no-nvenc-hwupload': opts.nvencHwupload = false; break;
+      case '--time-scale': opts.timeScale = parseFloat(next()); break;
       case '--music': opts.musicPath = next(); break;
       case '--generate-music': opts.generateMusic = true; break;
       case '--theme': opts.theme = next(); break;

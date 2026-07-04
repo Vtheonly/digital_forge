@@ -147,6 +147,12 @@ async function main() {
 
   // === 6. Boot Chrome with GPU flags and check chrome://gpu ===
   console.log('\n--- Chrome GPU rasterization check ---');
+
+  // ⚠️ CRITICAL: set FORGE_USE_GPU=1 before calling recommendedChromiumArgs()
+  // so we actually get the GPU flags (not the CPU --disable-gpu --headless flags).
+  // This was a bug in the original forge-gpu-check that produced false negatives.
+  process.env.FORGE_USE_GPU = '1';
+
   const { chromium } = require('playwright');
   const args = env.recommendedChromiumArgs();
   console.log(`Chrome args: ${args.join(' ')}\n`);
@@ -215,7 +221,7 @@ async function main() {
       captureScale: 0.5,  // smaller = faster
       frameFormat: 'jpeg',
       useGpu: true,
-      verifyGpu: false,
+      verifyGpu: true,   // ← enables Xvfb fallback if headless GPU fails
       resumeFromDisk: false
     });
 

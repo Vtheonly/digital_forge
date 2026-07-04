@@ -68,6 +68,17 @@ class Encoder {
     const c = this.config;
     const filters = [];
 
+    // === TIME SCALE: speed the video back up ===
+    // If timeScale=0.5, we captured at half speed (animation lasted 2x longer).
+    // We now speed up the video by 1/timeScale = 2x using setpts.
+    //   setpts=PTS/N divides presentation timestamps by N (speeds up by N)
+    //   atempo=N speeds up audio by N (but we handle audio separately)
+    const timeScale = c.get('timeScale');
+    if (timeScale !== 1.0) {
+      const speedup = 1 / timeScale;
+      filters.push(`setpts=PTS/${speedup}`);
+    }
+
     // Scale to final resolution
     const captureScale = c.get('captureScale');
     if (captureScale !== 1.0) {
@@ -98,14 +109,37 @@ class Encoder {
    * (where ffmpeg expects input options). Including `-i` here would
    * cause a duplicate input and ffmpeg would fail with:
    *   "Option b:v cannot be applied to input url ..."
+   *
+   * TIME SCALE: if timeScale != 1.0, we sped up the video with setpts.
+   * We also need to speed up the audio by the same factor using atempo.
+   * atempo accepts factors 0.5-2.0; for larger ranges we chain multiple.
    */
   _audioArgs(audioPath) {
     if (!audioPath) return ['-an'];
-    return [
+    const args = [
       '-c:a', this.config.get('audioCodec'),
-      '-b:a', this.config.get('audioBitrate'),
-      '-shortest'
+      '-b:a', this.config.get('audioBitrate')
     ];
+    // Apply audio speed-up to match video time-scale
+    const timeScale = this.config.get('timeScale');
+    if (timeScale !== 1.0) {
+      const speedup = 1 / timeScale;
+      // atempo only accepts 0.5-2.0; chain for larger ranges
+      const atempoFilters = [];
+      let remaining = speedup;
+      while (remaining > 2.0) {
+        atempoFilters.push('atempo=2.0');
+        remaining /= 2.0;
+      }
+      while (remaining < 0.5) {
+        atempoFilters.push('atempo=0.5');
+        remaining /= 0.5;
+      }
+      atempoFilters.push(`atempo=${remaining}`);
+      args.push('-af', atempoFilters.join(','));
+    }
+    args.push('-shortest');
+    return args;
   }
 
   /**

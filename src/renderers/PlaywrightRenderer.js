@@ -186,19 +186,89 @@ class PlaywrightRenderer extends Renderer {
 
     this.page = await this.ctx.newPage();
 
-    // === GPU VERIFICATION ===
+    // === GPU VERIFICATION + XVFB FALLBACK ===
     // After browser launch, verify the GPU is actually being used.
     // This catches the silent SwiftShader fallback that was the original bug.
+    //
+    // If GPU was requested but Chrome fell back to SwiftShader, AND Xvfb
+    // is available, we restart Chrome in HEADED mode under a virtual display.
+    // This is the most reliable GPU activation path on Colab T4 with newer
+    // NVIDIA drivers (580+) where headless GPU flags don't engage.
     if (c.get('useGpu') && c.get('verifyGpu')) {
       const { verifyGpu } = require('../utils/GpuVerifier');
       try {
         this.gpuStatus = await verifyGpu(this.page, this.logger);
         if (!this.gpuStatus.gpuActive) {
           this.logger.warn(
-            '⚠️  GPU was requested but Chrome is using CPU rasterization (SwiftShader). ' +
-            'Render will work but be SLOW. See docs/GPU_FIX.md for troubleshooting.',
+            'GPU was requested but Chrome is using CPU rasterization (SwiftShader). ' +
+            'Will try Xvfb (headed) fallback...',
             { glRenderer: this.gpuStatus.glRenderer }
           );
+
+          // Try Xvfb fallback
+          const { XvfbFallback } = require('../utils/XvfbFallback');
+          const xvfb = new XvfbFallback({ logger: this.logger });
+          const display = await xvfb.start();
+          if (display) {
+            // Close the SwiftShader browser and relaunch headed under Xvfb
+            await this.browser.close();
+            const headedArgs = args.filter(a =>
+              !a.startsWith('--headless') && a !== '--disable-gpu'
+            );
+            // Add --no-sandbox is already there; for headed we keep window flags off
+            this.logger.info('Relaunching Chrome HEADED under Xvfb', {
+              display, resolution: '1920x1080x24'
+            });
+            try {
+              this.browser = await chromium.launch({
+                args: headedArgs,
+                headless: false,           // ← KEY: headed mode
+                viewport: { width: captureW, height: captureH },
+                deviceScaleFactor: dsf,
+                executablePath,
+                env: { ...process.env, DISPLAY: display }
+              });
+              this.ctx = await this.browser.newContext({
+                viewport: { width: captureW, height: captureH },
+                deviceScaleFactor: dsf
+              });
+              await this.ctx.addInitScript(() => {
+                window.renderMode = true;
+                const _realNow = performance.now.bind(performance);
+                let _frozen = true;
+                performance.now = () => _frozen ? 0 : _realNow();
+                setTimeout(() => { _frozen = false; }, 1000);
+              });
+              this.page = await this.ctx.newPage();
+              this._xvfb = xvfb;  // remember to stop it on close
+
+              // Re-verify GPU
+              this.gpuStatus = await verifyGpu(this.page, this.logger);
+              if (this.gpuStatus.gpuActive) {
+                this.logger.info('✓ Xvfb fallback successful — GPU is now active', {
+                  glRenderer: this.gpuStatus.glRenderer
+                });
+              } else {
+                this.logger.warn('Xvfb fallback did NOT activate GPU — continuing with SwiftShader', {
+                  glRenderer: this.gpuStatus.glRenderer
+                });
+              }
+            } catch (e) {
+              this.logger.error('Xvfb relaunch failed', { err: e.message });
+              // Re-launch headless as fallback
+              this.browser = await chromium.launch(launchOpts);
+              this.ctx = await this.browser.newContext({
+                viewport: { width: captureW, height: captureH },
+                deviceScaleFactor: dsf
+              });
+              this.page = await this.ctx.newPage();
+            }
+          } else {
+            this.logger.warn(
+              'Xvfb not available — continuing with SwiftShader (CPU rasterization). ' +
+              'Install Xvfb for GPU acceleration: apt install -y xvfb'
+            );
+          }
         }
       } catch (e) {
         this.logger.warn('GPU verification failed (non-fatal)', { err: e.message });
@@ -314,15 +384,33 @@ class PlaywrightRenderer extends Renderer {
 
   async _getDuration() {
     if (this._duration !== null) return this._duration;
-    this._duration = await this.page.evaluate(() => window.masterTL.duration());
+    // Get the scene's native duration, then scale it.
+    // timeScale=0.5 means we play the animation at half speed, so a 30s
+    // scene takes 60s of "capture time" — we capture twice as many frames
+    // at the same fps. The output video is then sped back up in ffmpeg.
+    const nativeDuration = await this.page.evaluate(() => window.masterTL.duration());
+    const timeScale = this.config.get('timeScale');
+    this._duration = nativeDuration / timeScale;
+    this.logger.info('Scene duration', {
+      native: nativeDuration.toFixed(2) + 's',
+      timeScale,
+      capture: this._duration.toFixed(2) + 's'
+    });
     return this._duration;
   }
 
   async _renderFrame(t, outPath) {
     ensureDir(path.dirname(outPath));
 
+    // Apply time scaling: if timeScale=0.5, we seek to t*0.5 in the timeline.
+    // This makes the animation play at half speed during capture.
+    // The output video is then sped back up by 1/timeScale in ffmpeg.
+    const timeScale = this.config.get('timeScale');
+    const sceneT = t * timeScale;
+
     // Seek the timeline — this drives all GSAP animations deterministically
-    await this.page.evaluate((tt) => window.renderAtTime(tt), t);
+    // Use the SCALED time (sceneT), not the capture time (t).
+    await this.page.evaluate((tt) => window.renderAtTime(tt), sceneT);
 
     // Small wait for paint (necessary for some animated CSS to settle)
     // Skip on subsequent frames since they're typically fast
@@ -357,6 +445,11 @@ class PlaywrightRenderer extends Renderer {
     }
     if (this.browser) {
       try { await this.browser.close(); } catch { /* ignore */ }
+    }
+    // Stop Xvfb if we started it for the headed GPU fallback
+    if (this._xvfb) {
+      try { await this._xvfb.stop(); } catch { /* ignore */ }
+      this._xvfb = null;
     }
   }
 }
