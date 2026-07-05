@@ -251,6 +251,24 @@ class PlaywrightRenderer extends Renderer {
       timeout: 30000,
     });
 
+    // Verify if GSAP loaded successfully. If offline, inject the local cached copy.
+    const gsapLoaded = await this.page.evaluate(
+      () => typeof window.gsap !== "undefined",
+    );
+    if (!gsapLoaded) {
+      this.logger.warn(
+        "GSAP CDN failed to load (offline environment). Injecting local fallback...",
+      );
+      const localGsapPath = path.resolve(__dirname, "../utils/gsap.min.js");
+      if (fs.existsSync(localGsapPath)) {
+        await this.page.addScriptTag({ path: localGsapPath });
+      } else {
+        this.logger.error(
+          "Local GSAP fallback file not found. Render steps may fail.",
+        );
+      }
+    }
+
     const themeSource = c.get("theme");
     if (themeSource) {
       const { ThemeLoader } = require("../core/ThemeLoader");
@@ -301,7 +319,7 @@ class PlaywrightRenderer extends Renderer {
       `,
     });
 
-    // Disable CSS animations, CSS transitions, and layout filters to prevent timeline lag
+    // Disable CSS animations and filters during execution
     if (process.env.FORGE_FAST_MODE !== "0") {
       await this.page.addStyleTag({
         content: `

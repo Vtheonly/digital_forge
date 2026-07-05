@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Premium Showcase — FORGE.OS</title>
+  <title>Bespoke Showcase — Motion graphics</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
@@ -68,68 +68,7 @@
     }
 
     /* ============================================================
-       APP HEADER / WATERMARK / STATUS CONTROLS
-       ============================================================ */
-    #app-header {
-      position: absolute;
-      top: 60px;
-      left: 80px;
-      right: 80px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      z-index: 100;
-    }
-
-    .brand-logo-wrap {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .brand-logo-icon {
-      width: 44px;
-      height: 44px;
-      border: 3px solid #ff6b1a;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: 'Space Grotesk', sans-serif;
-      font-weight: 700;
-      font-size: 24px;
-      color: #ffb800;
-      background: rgba(10, 10, 16, 0.8);
-      box-shadow: 0 0 20px rgba(255, 107, 26, 0.35);
-    }
-
-    .brand-logo-text {
-      font-family: 'Space Grotesk', sans-serif;
-      font-weight: 700;
-      font-size: 28px;
-      letter-spacing: 2px;
-      color: #fff;
-    }
-
-    .system-status {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 20px;
-      color: rgba(255, 255, 255, 0.4);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .system-status .pulse-dot {
-      width: 10px;
-      height: 100%;
-      border-radius: 50%;
-      background: #ff6b1a;
-      box-shadow: 0 0 10px #ff6b1a;
-    }
-
-    /* ============================================================
-       BACKGROUND LAYERS
+       BACKGROUND DESIGN LAYER EFFECTS
        ============================================================ */
     .bg-layer {
       position: absolute;
@@ -225,98 +164,7 @@
     }
 
     /* ============================================================
-       APPLICATION INTERFACE (FORGE HEADER / SERVICE TABS)
-       ============================================================ */
-    #app-navigation {
-      position: absolute;
-      top: 150px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: calc(100% - 160px);
-      height: 90px;
-      background: rgba(10, 10, 18, 0.5);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      backdrop-filter: blur(20px);
-      border-radius: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-around;
-      padding: 0 16px;
-      z-index: 100;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
-      opacity: 0;
-    }
-
-    .nav-tab {
-      font-family: 'JetBrains Mono', monospace;
-      font-weight: 700;
-      font-size: 20px;
-      padding: 14px 28px;
-      border-radius: 12px;
-      color: rgba(255, 255, 255, 0.45);
-      border: 1px solid transparent;
-      transition: all 0.3s ease;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      background: rgba(255, 255, 255, 0.02);
-    }
-
-    .nav-tab.active {
-      background: linear-gradient(135deg, #ff6b1a, #ffb800);
-      color: #0a0a10;
-      box-shadow: 0 10px 30px rgba(255, 107, 26, 0.45);
-      transform: scale(1.05);
-    }
-
-    /* ============================================================
-       TELEMETRY SYSTEM WIDGET
-       ============================================================ */
-    #telemetry-widget {
-      position: absolute;
-      bottom: 60px;
-      left: 80px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 16px;
-      background: rgba(10, 10, 18, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      padding: 20px 30px;
-      border-radius: 16px;
-      z-index: 100;
-      backdrop-filter: blur(15px);
-      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
-      opacity: 0;
-    }
-
-    .tel-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 40px;
-    }
-
-    .tel-label {
-      color: rgba(255, 255, 255, 0.4);
-    }
-
-    .tel-val {
-      color: #fff;
-      font-weight: 700;
-    }
-
-    .tel-val.glow-orange {
-      color: #ff6b1a;
-      text-shadow: 0 0 10px rgba(255, 107, 26, 0.6);
-    }
-
-    .tel-val.glow-red {
-      color: #ff1e3c;
-      text-shadow: 0 0 10px rgba(255, 30, 60, 0.6);
-    }
-
-    /* ============================================================
-       SCENE BASE CONTAINER
+       SCENE STRUCTURE STYLE SYSTEM
        ============================================================ */
     .scene {
       position: absolute;
@@ -465,7 +313,7 @@
     }
 
     /* ============================================================
-       SCENE 2: PROBLEM (STABILIZED LAYOUT SYSTEM)
+       SCENE 2: PROBLEM (DETERMINISTIC GLITCH LAYOUT)
        ============================================================ */
     #scene-problem {
       background: radial-gradient(ellipse at center, rgba(255, 30, 60, 0.15) 0%, transparent 70%);
@@ -501,7 +349,13 @@
       margin-bottom: 30px;
     }
 
-    .glitch-text {
+    /* Programmatic Custom Glitch Containers */
+    .glitch-container {
+      position: relative;
+      display: inline-block;
+    }
+
+    .glitch-base {
       position: relative;
       font-family: 'Inter', sans-serif;
       font-weight: 900;
@@ -510,6 +364,7 @@
       line-height: 1.15;
       color: #fff;
       text-align: center;
+      z-index: 3;
       width: 100%;
       max-width: 900px;
       padding: 0 30px;
@@ -518,39 +373,45 @@
       overflow-wrap: break-word;
     }
 
-    .glitch-text::before,
-    .glitch-text::after {
-      content: attr(data-text);
+    .glitch-layer {
       position: absolute;
       top: 0;
       left: 0;
-      right: 0;
-      bottom: 0;
+      width: 100%;
+      height: 100%;
+      font-family: 'Inter', sans-serif;
+      font-weight: 900;
+      font-size: 78px;
+      letter-spacing: -2px;
+      line-height: 1.15;
       text-align: center;
-      color: #fff;
-      background: transparent;
-      overflow: hidden;
+      box-sizing: border-box;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      padding: 0 30px;
+      z-index: 1;
+      opacity: 0;
+      mix-blend-mode: screen;
+      pointer-events: none;
     }
 
-    .glitch-text::before {
-      color: #ff0040;
-      z-index: -1;
-      transform: translate(-4px, 0);
+    .glitch-layer.red {
+      color: #ff0055;
+      transform: translate(var(--gx1, -4px), var(--gy1, 2px));
     }
 
-    .glitch-text::after {
-      color: #00e5ff;
-      z-index: -2;
-      transform: translate(4px, 0);
+    .glitch-layer.cyan {
+      color: #00f0ff;
+      transform: translate(var(--gx2, 4px), var(--gy2, -2px));
     }
 
     #scene-problem .broken-mockup {
       position: absolute;
-      width: 220px;
-      height: 350px;
+      width: 200px;
+      height: 320px;
       background: #1a1a2a;
       border: 2px solid rgba(255, 30, 60, 0.4);
-      border-radius: 24px;
+      border-radius: 20px;
       opacity: 0;
       box-shadow: 0 0 40px rgba(255, 30, 60, 0.3);
     }
@@ -624,7 +485,7 @@
     }
 
     /* ============================================================
-       DEVICE SIMULATOR STAGE
+       BORDERLESS GLASS CANVAS STRUCTURE
        ============================================================ */
     .device-stage {
       position: relative;
@@ -637,47 +498,62 @@
       margin-top: 80px;
     }
 
-    /* ============================================================
-       SIMULATOR: MOBILE APP
-       ============================================================ */
-    .phone {
-      width: 420px;
+    /* High-end glassmorphic floating screen containers */
+    .app-canvas {
+      width: 480px;
       height: 860px;
-      background: #0e0e16;
-      border-radius: 60px;
-      border: 8px solid #2a2a3a;
-      box-shadow: 0 40px 80px rgba(0, 0, 0, 0.6), 0 0 100px rgba(255, 107, 26, 0.35);
+      background: rgba(15, 15, 25, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(25px);
+      border-radius: 40px;
+      box-shadow: 0 40px 100px rgba(0, 0, 0, 0.7), 0 0 80px rgba(255, 107, 26, 0.12);
       position: relative;
       overflow: hidden;
       opacity: 0;
       transform: scale(0.4) translateY(80px);
     }
 
-    .phone::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 180px;
-      height: 36px;
-      background: #0a0a10;
-      border-radius: 0 0 20px 20px;
-      z-index: 5;
+    .desktop-canvas {
+      width: 900px;
+      height: 600px;
+      background: rgba(10, 10, 18, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(25px);
+      border-radius: 24px;
+      box-shadow: 0 40px 100px rgba(0, 0, 0, 0.7), 0 0 80px rgba(94, 158, 255, 0.1);
+      position: relative;
+      overflow: hidden;
+      opacity: 0;
+      transform: scale(0.4);
     }
 
-    .phone-screen {
+    .web-canvas {
+      width: 920px;
+      height: 560px;
+      background: rgba(12, 12, 22, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(25px);
+      border-radius: 24px;
+      box-shadow: 0 40px 100px rgba(0, 0, 0, 0.7), 0 0 80px rgba(255, 184, 0, 0.1);
+      position: relative;
+      overflow: hidden;
+      opacity: 0;
+      transform: scale(0.4) translateY(40px);
+    }
+
+    /* ============================================================
+       FLUID GRAPHIC COMPONENTS: MOBILE APP CONTENT
+       ============================================================ */
+    .app-screen {
       width: 100%;
       height: 100%;
-      background: linear-gradient(180deg, #1a1a2e 0%, #14141f 100%);
       padding: 60px 32px 32px;
       display: flex;
       flex-direction: column;
-      opacity: 0;
-      transform: translateY(40px);
+      opacity: 1;
     }
 
-    .phone-header {
+    .app-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -686,13 +562,13 @@
       transform: translateX(-20px);
     }
 
-    .phone-header .greet {
+    .app-header .greet {
       font-size: 22px;
       color: rgba(255, 255, 255, 0.55);
       font-weight: 600;
     }
 
-    .phone-header .avatar {
+    .app-header .avatar {
       width: 44px;
       height: 44px;
       border-radius: 50%;
@@ -700,7 +576,7 @@
       opacity: 0;
     }
 
-    .phone-title {
+    .app-title {
       font-size: 38px;
       font-weight: 900;
       color: #fff;
@@ -710,8 +586,8 @@
       transform: translateY(15px);
     }
 
-    .phone-card {
-      background: rgba(255, 255, 255, 0.06);
+    .app-card {
+      background: rgba(255, 255, 255, 0.05);
       border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: 24px;
       padding: 24px;
@@ -723,35 +599,77 @@
       transform: translateY(30px);
     }
 
-    .phone-card .icon-box {
+    /* Glowing Feature Highlights */
+    .app-card.feature-glow {
+      background: rgba(255, 107, 26, 0.08);
+      border: 1.5px solid rgba(255, 107, 26, 0.35);
+      box-shadow: 0 10px 30px rgba(255, 107, 26, 0.15);
+    }
+
+    .app-card .icon-box {
       width: 60px;
       height: 60px;
       border-radius: 16px;
       background: linear-gradient(135deg, #ff6b1a, #ffb800);
       flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      font-size: 24px;
+      color: #000;
     }
 
-    .phone-card .icon-box.cool {
+    .app-card .icon-box.cool {
       background: linear-gradient(135deg, #5e9eff, #4dd0ff);
     }
 
-    .phone-card .lines {
+    .app-card .card-text-block {
       flex: 1;
     }
 
-    .phone-card .line1 {
-      height: 14px;
-      background: rgba(255, 255, 255, 0.5);
-      border-radius: 8px;
-      margin-bottom: 8px;
-      width: 70%;
+    .app-card .card-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 6px;
     }
 
-    .phone-card .line2 {
-      height: 10px;
-      background: rgba(255, 255, 255, 0.22);
-      border-radius: 8px;
-      width: 50%;
+    .app-card .card-desc {
+      font-size: 16px;
+      color: rgba(255, 255, 255, 0.45);
+      font-weight: 500;
+    }
+
+    /* Database Syncing overlay inside card */
+    .sync-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(10, 10, 15, 0.92);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      gap: 20px;
+      opacity: 0;
+    }
+
+    .sync-spinner {
+      width: 60px;
+      height: 60px;
+      border: 4px solid rgba(255, 107, 26, 0.2);
+      border-top-color: #ff6b1a;
+      border-radius: 50%;
+    }
+
+    .sync-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 18px;
+      color: #ffb800;
+      letter-spacing: 2px;
     }
 
     .phone-notification {
@@ -791,69 +709,19 @@
       font-size: 24px;
       opacity: 0;
       transform: translateY(20px) scale(0.9);
-      cursor: pointer;
     }
 
     /* ============================================================
-       SIMULATOR: DESKTOP APPS
+       FLUID GRAPHIC COMPONENTS: DESKTOP
        ============================================================ */
-    .desktop {
-      width: 880px;
-      height: 620px;
-      background: #0e0e16;
-      border-radius: 20px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 40px 80px rgba(0, 0, 0, 0.6), 0 0 100px rgba(94, 158, 255, 0.30);
-      overflow: hidden;
-      opacity: 0;
-      transform: scale(0.4);
-    }
-
-    .desktop-titlebar {
-      height: 50px;
-      background: #1a1a2a;
-      display: flex;
-      align-items: center;
-      padding: 0 20px;
-      gap: 10px;
-    }
-
-    .desktop-titlebar .light {
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      opacity: 0;
-      transform: scale(0);
-    }
-
-    .desktop-titlebar .light.r {
-      background: #ff5f57;
-    }
-
-    .desktop-titlebar .light.y {
-      background: #ffbd2e;
-    }
-
-    .desktop-titlebar .light.g {
-      background: #28c940;
-    }
-
-    .desktop-titlebar .title {
-      margin-left: 20px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 18px;
-      color: rgba(255, 255, 255, 0.4);
-      opacity: 0;
-    }
-
     .desktop-body {
       display: flex;
-      height: calc(100% - 50px);
+      height: 100%;
     }
 
     .desktop-sidebar {
       width: 200px;
-      background: #14141f;
+      background: rgba(20, 20, 31, 0.4);
       padding: 30px 20px;
       border-right: 1px solid rgba(255, 255, 255, 0.05);
     }
@@ -926,68 +794,8 @@
     }
 
     /* ============================================================
-       SIMULATOR: WEBSITES
+       FLUID GRAPHIC COMPONENTS: WEBSITES
        ============================================================ */
-    .browser {
-      width: 900px;
-      background: #0e0e16;
-      border-radius: 16px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 40px 80px rgba(0, 0, 0, 0.6), 0 0 100px rgba(255, 184, 0, 0.30);
-      overflow: hidden;
-      opacity: 0;
-      transform: scale(0.4) translateY(40px);
-    }
-
-    .browser-bar {
-      height: 56px;
-      background: #1a1a2a;
-      display: flex;
-      align-items: center;
-      padding: 0 20px;
-      gap: 16px;
-    }
-
-    .browser-bar .b-light {
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      opacity: 0;
-      transform: scale(0);
-    }
-
-    .browser-bar .b-light.r {
-      background: #ff5f57;
-    }
-
-    .browser-bar .b-light.y {
-      background: #ffbd2e;
-    }
-
-    .browser-bar .b-light.g {
-      background: #28c940;
-    }
-
-    .browser-bar .url {
-      flex: 1;
-      height: 32px;
-      background: #0a0a10;
-      border-radius: 100px;
-      padding: 0 20px;
-      display: flex;
-      align-items: center;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 16px;
-      color: rgba(255, 255, 255, 0.5);
-      opacity: 0;
-      transform: translateY(-10px);
-    }
-
-    .browser-bar .url .lock {
-      color: #28c940;
-      margin-right: 8px;
-    }
-
     .browser-hero {
       height: 380px;
       background: linear-gradient(135deg, #1a0d04 0%, #2a1408 50%, #1a1a2e 100%);
@@ -1100,7 +908,7 @@
     }
 
     /* ============================================================
-       SIMULATOR: AI MODELS
+       FLUID GRAPHIC COMPONENTS: AI SYSTEMS
        ============================================================ */
     .ai-stage {
       width: 900px;
@@ -1274,7 +1082,7 @@
     }
 
     /* ============================================================
-       TRANSITION OVERLAYS
+       TRANSITION EFFECTS OVERLAYS
        ============================================================ */
     #whip-overlay {
       position: absolute;
@@ -1286,18 +1094,6 @@
         linear-gradient(90deg, transparent 0%, rgba(255, 184, 0, 0.4) 50%, transparent 100%);
       transform: scaleX(0);
       transform-origin: left center;
-    }
-
-    /* Simulated Click Cursor */
-    #cursor {
-      position: absolute;
-      width: 48px;
-      height: 48px;
-      background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='white'><path d='M4.5 2v17.5l5.3-5.3 4.2 8.5 3.5-1.8-4.2-8.5 7.7-.3z'/></svg>") no-repeat;
-      pointer-events: none;
-      z-index: 999;
-      opacity: 0;
-      transform: translate(0, 0);
     }
   </style>
 </head>
@@ -1311,46 +1107,7 @@
           <div id="shake">
             <div id="stage">
 
-              <!-- ============ COMPONENT: APP NAV HEADER ============ -->
-              <div id="app-header">
-                <div class="brand-logo-wrap">
-                  <div class="brand-logo-icon">▲</div>
-                  <div class="brand-logo-text">FORGE.OS</div>
-                </div>
-                <div class="system-status">
-                  <div class="pulse-dot"></div>
-                  <span>LIVE SHOWCASE</span>
-                </div>
-              </div>
-
-              <!-- ============ COMPONENT: WEB NAVIGATION TABS ============ -->
-              <div id="app-navigation">
-                <div class="nav-tab" id="tab-mobile">MOBILE</div>
-                <div class="nav-tab" id="tab-desktop">DESKTOP</div>
-                <div class="nav-tab" id="tab-web">WEB DEV</div>
-                <div class="nav-tab" id="tab-ai">CORE AI</div>
-              </div>
-
-              <!-- ============ COMPONENT: SYSTEM TELEMETRY ============ -->
-              <div id="telemetry-widget">
-                <div class="tel-row">
-                  <span class="tel-label">PIPELINE RATE</span>
-                  <span class="tel-val" id="tel-fps">60 FPS</span>
-                </div>
-                <div class="tel-row">
-                  <span class="tel-label">PROCESS_SPEED</span>
-                  <span class="tel-val glow-orange" id="tel-speed">1.00x</span>
-                </div>
-                <div class="tel-row">
-                  <span class="tel-label">GPU_ACCEL</span>
-                  <span class="tel-val glow-orange">ACTIVE</span>
-                </div>
-              </div>
-
-              <!-- ============ MOCK CURSOR FOR SIMULATIONS ============ -->
-              <div id="cursor"></div>
-
-              <!-- ============ BACKGROUND LAYERS ============ -->
+              <!-- ============ BACKGROUND DESIGN LAYERS ============ -->
               <div id="bg-gradient" class="bg-layer"></div>
               <div id="bg-problem" class="bg-layer"></div>
               <div id="bg-solution" class="bg-layer"></div>
@@ -1375,30 +1132,39 @@
                 </h1>
               </div>
 
-              <!-- ============ SCENE 2: PROBLEM (STABILIZED SYSTEM) ============ -->
+              <!-- ============ SCENE 2: PROBLEM (DETERMINISTIC CHROMATIC GLITCH) ============ -->
               <div class="scene" id="scene-problem">
                 <div class="broken-mockup" id="bm1" style="top: 20%; left: 12%;"></div>
                 <div class="broken-mockup" id="bm2" style="top: 25%; right: 12%;"></div>
                 <div class="broken-mockup" id="bm3" style="bottom: 18%; left: 18%;"></div>
 
                 <div class="problem-sequence-container">
-                  <!-- Segment 1 -->
+                  <!-- Glitch Segment 1 -->
                   <div class="problem-step" id="p-step-1">
                     <div class="problem-eyebrow">// the diagnostic</div>
-                    <div class="glitch-text" data-text="STRUGGLING WITH OUTDATED SYSTEMS?">STRUGGLING WITH OUTDATED
-                      SYSTEMS?</div>
+                    <div class="glitch-container" id="glitch-1">
+                      <div class="glitch-base">STRUGGLING WITH OUTDATED SYSTEMS?</div>
+                      <div class="glitch-layer red">STRUGGLING WITH OUTDATED SYSTEMS?</div>
+                      <div class="glitch-layer cyan">STRUGGLING WITH OUTDATED SYSTEMS?</div>
+                    </div>
                   </div>
-                  <!-- Segment 2 -->
+                  <!-- Glitch Segment 2 -->
                   <div class="problem-step" id="p-step-2">
                     <div class="problem-eyebrow">// the bottleneck</div>
-                    <div class="glitch-text" data-text="OFF-THE-SHELF TOOLS ARE SLOW &amp; RIGID">OFF-THE-SHELF TOOLS
-                      ARE SLOW &amp; RIGID</div>
+                    <div class="glitch-container" id="glitch-2">
+                      <div class="glitch-base">OFF-THE-SHELF TOOLS ARE SLOW &amp; RIGID</div>
+                      <div class="glitch-layer red">OFF-THE-SHELF TOOLS ARE SLOW &amp; RIGID</div>
+                      <div class="glitch-layer cyan">OFF-THE-SHELF TOOLS ARE SLOW &amp; RIGID</div>
+                    </div>
                   </div>
-                  <!-- Segment 3 -->
+                  <!-- Glitch Segment 3 -->
                   <div class="problem-step" id="p-step-3">
                     <div class="problem-eyebrow">// the damage</div>
-                    <div class="glitch-text" data-text="AND COSTING YOU TIME &amp; REVENUE">AND COSTING YOU TIME &amp;
-                      REVENUE</div>
+                    <div class="glitch-container" id="glitch-3">
+                      <div class="glitch-base">AND COSTING YOU TIME &amp; REVENUE</div>
+                      <div class="glitch-layer red">AND COSTING YOU TIME &amp; REVENUE</div>
+                      <div class="glitch-layer cyan">AND COSTING YOU TIME &amp; REVENUE</div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1418,62 +1184,73 @@
                 </div>
               </div>
 
-              <!-- ============ SCENE 4: MOBILE APPS ============ -->
+              <!-- ============ SCENE 4: MOBILE SHOWCASE (EXPANDED GATEWAY MULTI-STATE) ============ -->
               <div class="scene" id="scene-mobile">
                 <div class="device-stage">
-                  <div class="phone" id="phone">
-                    <div class="phone-notification" id="phoneNotif">
-                      <div class="nt-title">NEW ORDER</div>
-                      <div class="nt-body">You just received a payment of $42.00</div>
+                  <div class="app-canvas" id="phone">
+
+                    <!-- Secure Sync Overlay Component -->
+                    <div class="sync-overlay" id="syncPanel">
+                      <div class="sync-spinner"></div>
+                      <div class="sync-label" id="syncStatus">// SYNCING SECURE ARCHITECTURE...</div>
                     </div>
-                    <div class="phone-screen">
-                      <div class="phone-header">
-                        <div class="greet">Good morning,</div>
+
+                    <div class="phone-notification" id="phoneNotif">
+                      <div class="nt-title">NEW GATEWAY ORDER</div>
+                      <div class="nt-body">Database updated. Captured +$1,250.00</div>
+                    </div>
+
+                    <div class="app-screen">
+                      <div class="app-header">
+                        <div class="greet">System status,</div>
                         <div class="avatar"></div>
                       </div>
-                      <div class="phone-title">Your Store</div>
-                      <div class="phone-card">
-                        <div class="icon-box"></div>
-                        <div class="lines">
-                          <div class="line1"></div>
-                          <div class="line2"></div>
+                      <div class="app-title">Business Hub</div>
+
+                      <!-- Card 1: Secure Transactions -->
+                      <div class="app-card" id="appCard-1">
+                        <div class="icon-box">✓</div>
+                        <div class="card-text-block">
+                          <div class="card-title">Secured Protocol</div>
+                          <div class="card-desc">Local military-grade encryption</div>
                         </div>
                       </div>
-                      <div class="phone-card">
-                        <div class="icon-box cool"></div>
-                        <div class="lines">
-                          <div class="line1"></div>
-                          <div class="line2"></div>
+
+                      <!-- Card 2: Offline Architecture -->
+                      <div class="app-card cool" id="appCard-2">
+                        <div class="icon-box cool">Sync</div>
+                        <div class="card-text-block">
+                          <div class="card-title">Offline-First Engine</div>
+                          <div class="card-desc">Zero latency local storage matrix</div>
                         </div>
                       </div>
-                      <div class="phone-card">
-                        <div class="icon-box"></div>
-                        <div class="lines">
-                          <div class="line1"></div>
-                          <div class="line2"></div>
+
+                      <!-- Card 3: Analytic Processing -->
+                      <div class="app-card" id="appCard-3">
+                        <div class="icon-box">AI</div>
+                        <div class="card-text-block">
+                          <div class="card-title">Bespoke Analytical Hub</div>
+                          <div class="line2"
+                            style="background: rgba(255,255,255,0.15); width: 80%; height: 8px; border-radius: 4px; margin-top: 10px;">
+                          </div>
                         </div>
                       </div>
-                      <div class="phone-cta" id="phone-btn">ORDER NOW</div>
+
+                      <div class="phone-cta" id="phone-btn">DEPLOY CORE CONFIG</div>
                     </div>
                   </div>
                 </div>
                 <div class="caption-box">
-                  <div class="caption-eyebrow">// 01 — premium app</div>
+                  <div class="caption-eyebrow" id="mobile-eyebrow">// 01 — secure core app</div>
                   <h2 class="caption-headline" id="capMobile"></h2>
-                  <p class="caption-sub">iOS &amp; Android apps engineered for real-world conversion.</p>
+                  <p class="caption-sub" id="mobile-sub">iOS &amp; Android platforms built for real-world growth.</p>
                 </div>
               </div>
 
               <!-- ============ SCENE 5: DESKTOP APPS ============ -->
               <div class="scene" id="scene-desktop">
                 <div class="device-stage">
-                  <div class="desktop" id="desktop">
-                    <div class="desktop-titlebar">
-                      <div class="light r"></div>
-                      <div class="light y"></div>
-                      <div class="light g"></div>
-                      <div class="title">control-panel — dashboard.exe</div>
-                    </div>
+                  <div class="desktop-canvas" id="desktop">
                     <div class="desktop-body">
                       <div class="desktop-sidebar">
                         <div class="side-item active" id="side-1"></div>
@@ -1505,28 +1282,21 @@
                 <div class="caption-box">
                   <div class="caption-eyebrow">// 02 — desktop software</div>
                   <h2 class="caption-headline" id="capDesktop"></h2>
-                  <p class="caption-sub">Custom native software to optimize your business operations.</p>
+                  <p class="caption-sub">Bespoke native applications constructed to optimize your operations.</p>
                 </div>
               </div>
 
               <!-- ============ SCENE 6: WEBSITES ============ -->
               <div class="scene" id="scene-web">
                 <div class="device-stage" style="height: 800px;">
-                  <div class="browser" id="browser">
-                    <div class="browser-bar">
-                      <div class="b-light r"></div>
-                      <div class="b-light y"></div>
-                      <div class="b-light g"></div>
-                      <div class="url"><span class="lock">🔒</span> yourbrand.com</div>
-                    </div>
+                  <div class="web-canvas" id="browser">
                     <div class="browser-hero">
-                      <div class="bh-eyebrow">// your platform</div>
+                      <div class="bh-eyebrow">// cloud platform</div>
                       <div class="bh-title">
                         <span class="bw">Built</span>
                         <span class="bw">to</span>
                         <span class="bw accent">Convert.</span>
                       </div>
-                      <div class="bh-cta" id="web-btn">Start Now →</div>
                     </div>
                     <div class="browser-strip">
                       <div class="bs-cell">
@@ -1545,9 +1315,9 @@
                   </div>
                 </div>
                 <div class="caption-box">
-                  <div class="caption-eyebrow">// 03 — cloud platform</div>
+                  <div class="caption-eyebrow">// 03 — custom platform</div>
                   <h2 class="caption-headline" id="capWeb"></h2>
-                  <p class="caption-sub">Superfast, responsive, and cleanly custom-coded.</p>
+                  <p class="caption-sub">Fast, responsive, and completely coded from scratch.</p>
                 </div>
               </div>
 
@@ -1571,7 +1341,7 @@
                 <div class="caption-box">
                   <div class="caption-eyebrow">// 04 — intelligence</div>
                   <h2 class="caption-headline" id="capAI"></h2>
-                  <p class="caption-sub">Implement advanced custom AI integration to automate your pipeline.</p>
+                  <p class="caption-sub">Implement custom algorithms to scale your backend workflows.</p>
                 </div>
               </div>
 
@@ -1593,7 +1363,7 @@
                   <span class="arrow">→</span>
                   <span>START YOUR PROJECT</span>
                 </div>
-                <div class="cta-tag">let's build software built for your business</div>
+                <div class="cta-tag">we build custom business software</div>
               </div>
 
               <!-- ============ OVERLAYS ============ -->
@@ -1638,7 +1408,7 @@
     fitStage();
 
     /* ============================================================
-       CAMERA SYSTEMS (drift & shake cleared for stability)
+       STABLE COMPOSITED CAMERA MATRIX
        ============================================================ */
     const camEl = document.getElementById('camera');
     const driftEl = document.getElementById('drift');
@@ -1660,7 +1430,7 @@
       tl.to(camEl, { scale: 1.0, duration, ease }, time);
     }
 
-    /* WHIP SCENE TRANSITION */
+    /* WHIP MOTION TRANSITION */
     function whip(tl, time, fromScene, toScene, dir = 'right') {
       const dur = 0.45;
       tl.to(camEl, {
@@ -1688,45 +1458,34 @@
       tl.to('#impact-flash', { opacity: 0, duration: 0.3, ease: 'power2.out' }, time + 0.06);
     }
 
-    /* TAB SELECTION SYSTEM ANIMATOR */
-    function updateHeaderTabs(tl, activeId, time) {
-      const tabs = ['#tab-mobile', '#tab-desktop', '#tab-web', '#tab-ai'];
-      tabs.forEach(tabSelector => {
-        if (tabIdMatches(tabSelector, activeId)) {
-          tl.to(tabSelector, {
-            color: '#0a0a10',
-            background: 'linear-gradient(135deg, #ff6b1a, #ffb800)',
-            borderColor: 'transparent',
-            scale: 1.08,
-            boxShadow: '0 10px 25px rgba(255, 107, 26, 0.45)',
-            duration: 0.3,
-            ease: 'power2.out'
-          }, time);
-        } else {
-          tl.to(tabSelector, {
-            color: 'rgba(255, 255, 255, 0.45)',
-            background: 'rgba(10, 10, 18, 0.4)',
-            borderColor: 'rgba(255, 255, 255, 0.08)',
-            scale: 1.0,
-            boxShadow: 'none',
-            duration: 0.3,
-            ease: 'power2.out'
-          }, time);
-        }
-      });
-    }
-
-    function tabIdMatches(selector, rawId) {
-      return selector.includes(rawId);
-    }
-
-    /* DYNAMIC TELEMETRY SPEED PANEL */
-    function setTelemetryProcessSpeed(tl, speedStr, glowClass, time) {
-      const speedVal = document.getElementById('tel-speed');
-      tl.call(() => {
-        speedVal.textContent = speedStr;
-        speedVal.className = 'tel-val ' + glowClass;
-      }, null, time);
+    /* ============================================================
+       DETERMINISTIC CHROMATIC GLITCH SCHEME (GSAP POWERED)
+       ============================================================ */
+    function animateGlitchText(tl, targetSelector, startTime, duration) {
+      const step = 0.04;
+      const steps = Math.floor(duration / step);
+      for (let i = 0; i < steps; i++) {
+        const currT = startTime + i * step;
+        tl.to(targetSelector, {
+          '--gx1': `${(Math.random() - 0.5) * 16}px`,
+          '--gy1': `${(Math.random() - 0.5) * 8}px`,
+          '--gx2': `${(Math.random() - 0.5) * -16}px`,
+          '--gy2': `${(Math.random() - 0.5) * -8}px`,
+          '--go-1': Math.random() > 0.3 ? 0.8 : 0.1,
+          '--go-2': Math.random() > 0.3 ? 0.8 : 0.1,
+          skewX: `${(Math.random() - 0.5) * 12}deg`,
+          duration: step,
+          ease: 'none'
+        }, currT);
+      }
+      // Clean reset
+      tl.to(targetSelector, {
+        '--gx1': '0px', '--gy1': '0px',
+        '--gx2': '0px', '--gy2': '0px',
+        '--go-1': 0, '--go-2': 0,
+        skewX: '0deg',
+        duration: 0.05
+      }, startTime + duration);
     }
 
     /* ============================================================
@@ -1968,9 +1727,9 @@
     (function buildHookFlashes() {
       const row = document.getElementById('hookFlashes');
       const flashes = [
-        { type: 'phone', bg: 'linear-gradient(180deg, #1a1a2e, #14141f)', w: 240, h: 480, label: '' },
-        { type: 'desktop', bg: '#0e0e16', w: 520, h: 360, label: '' },
-        { type: 'web', bg: 'linear-gradient(135deg, #1a0d04, #2a1408)', w: 520, h: 360, label: '' },
+        { type: 'phone', bg: 'rgba(15,15,25,0.6)', w: 240, h: 480, label: '' },
+        { type: 'desktop', bg: 'rgba(10,10,18,0.6)', w: 520, h: 360, label: '' },
+        { type: 'web', bg: 'rgba(12,12,22,0.6)', w: 520, h: 360, label: '' },
         { type: 'ai', bg: 'radial-gradient(circle, #1a1a2e, #0a0a10)', w: 480, h: 480, label: '' }
       ];
       flashes.forEach((f, i) => {
@@ -2000,9 +1759,9 @@
       });
     }
 
-    const capMobile = buildCaption('capMobile', 'MOBILE DEV', []);
-    const capDesktop = buildCaption('capDesktop', 'DESKTOP DEV', []);
-    const capWeb = buildCaption('capWeb', 'WEB PRODUCTS', []);
+    const capMobile = buildCaption('capMobile', 'MOBILE ECOSYSTEM', []);
+    const capDesktop = buildCaption('capDesktop', 'DESKTOP UTILITIES', []);
+    const capWeb = buildCaption('capWeb', 'BESPOKE WEB PRODUCTS', []);
     const capAI = buildCaption('capAI', 'INTELLIGENCE AI', []);
 
     const net = (function buildNeuralNet() {
@@ -2051,7 +1810,7 @@
     })();
 
     /* ============================================================
-       CENTRALIZED GSAP REEL TIMELINE
+       CENTRAL REEL MASTER TIMELINE
        ============================================================ */
     function buildTimeline() {
       const tl = gsap.timeline({});
@@ -2066,7 +1825,7 @@
       gsap.set('#bg-problem', { opacity: 0 });
       gsap.set('#bg-solution', { opacity: 0 });
 
-      /* Scene 1 Reveal (0.00s) */
+      /* Scene 1: Initial Hook */
       tl.set('#scene-hook', { opacity: 1 }, 0);
       punchIn(tl, 1.0, 0, 2.5, 'power2.out');
 
@@ -2088,14 +1847,13 @@
       punchIn(tl, 1.0, 1.9, 0.2, 'power4.out');
       punchIn(tl, 1.0, 2.1, 0.4, 'power2.out');
 
-      /* Whip to Problem */
+      /* Transition to Scene 2: Problem */
       whip(tl, 2.5, '#scene-hook', '#scene-problem', 'right');
 
-      /* Scene 2: Problem Sequential Display (2.95s) */
+      /* Scene 2: Problem Stage (2.95s - 6.5s) */
       const problemT = 2.95;
 
       tl.to('#bg-problem', { opacity: 1, duration: 0.5, ease: 'power2.out' }, problemT);
-      setTelemetryProcessSpeed(tl, '0.33x', 'glow-red', problemT); // Slow metric down during problem
 
       tl.set('.broken-mockup', { opacity: 0, y: 40, rotation: -15 });
       punchIn(tl, 1.0, problemT, 3.0, 'power2.inOut');
@@ -2104,31 +1862,33 @@
       tl.to('#bm2', { opacity: 0.5, y: 0, rotation: 10, duration: 0.5, ease: 'power2.out' }, problemT + 0.25);
       tl.to('#bm3', { opacity: 0.4, y: 0, rotation: -5, duration: 0.5, ease: 'power2.out' }, problemT + 0.4);
 
-      /* Diagnostic Step 1 */
+      /* Diagnostic Step 1 (Smooth, deterministic glitch timeline injection) */
       tl.to('#p-step-1', { opacity: 1, y: 0, duration: 0.4, ease: 'power3.out' }, problemT + 0.3);
+      animateGlitchText(tl, '#glitch-1', problemT + 0.4, 0.6);
       window.registerSpark(540, 960, 15, problemT + 0.35);
       tl.call(() => spawnSparkBurst(540, 960, 15), null, problemT + 0.35);
       tl.to('#p-step-1', { opacity: 0, y: -40, duration: 0.35, ease: 'power3.in' }, problemT + 1.25);
 
       /* Diagnostic Step 2 */
       tl.to('#p-step-2', { opacity: 1, y: 0, duration: 0.4, ease: 'power3.out' }, problemT + 1.4);
+      animateGlitchText(tl, '#glitch-2', problemT + 1.5, 0.6);
       window.registerSpark(540, 960, 15, problemT + 1.45);
       tl.call(() => spawnSparkBurst(540, 960, 15), null, problemT + 1.45);
       tl.to('#p-step-2', { opacity: 0, y: -40, duration: 0.35, ease: 'power3.in' }, problemT + 2.35);
 
       /* Diagnostic Step 3 */
       tl.to('#p-step-3', { opacity: 1, y: 0, duration: 0.4, ease: 'power3.out' }, problemT + 2.5);
+      animateGlitchText(tl, '#glitch-3', problemT + 2.6, 0.8);
       window.registerSpark(540, 960, 25, problemT + 2.55);
       tl.call(() => spawnSparkBurst(540, 960, 25), null, problemT + 2.55);
 
-      /* Whip to Solution Brand */
+      /* Transition to Solution */
       whip(tl, 6.0, '#scene-problem', '#scene-solution', 'left');
 
       tl.to('#bg-problem', { opacity: 0, duration: 0.5, ease: 'power2.out' }, 6.0);
       tl.to('#bg-solution', { opacity: 1, duration: 0.5, ease: 'power2.out' }, 6.0);
-      setTelemetryProcessSpeed(tl, '2.50x', 'glow-orange', 6.0); // Boost speed upon brand reveal
 
-      /* Scene 3: Solution (6.5s) */
+      /* Scene 3: Solution (6.5s - 10.5s) */
       const solT = 6.5;
 
       tl.set('#scene-solution .forge-glow', { opacity: 0, scale: 0.3 });
@@ -2158,70 +1918,89 @@
         opacity: 1, y: 0, duration: 0.5, ease: 'power2.out'
       }, solT + 1.5);
 
-      /* Transition to Core Interface Mode */
-      tl.to('#app-navigation', { opacity: 1, y: 0, duration: 0.5 }, 10.0);
-      tl.to('#telemetry-widget', { opacity: 1, y: 0, duration: 0.5 }, 10.0);
-      setTelemetryProcessSpeed(tl, '1.00x', 'glow-orange', 10.0);
-
       whip(tl, 10.5, '#scene-solution', '#scene-mobile', 'right');
 
-      /* Scene 4: Mobile Apps (10.95s) */
-      const mobT = 10.95;
-      updateHeaderTabs(tl, 'mobile', mobT);
+      /* ============================================================
+         SCENE 4: EXPANDED MOBILE SHOWCASE (10.5s – 18.0s)
+         ============================================================ */
+      const mobT = 10.5;
 
       tl.set('#phone', { opacity: 0, scale: 0.4, y: 80, rotation: -8 });
-      tl.set('.phone-screen', { opacity: 0, y: 40 });
-      tl.set('.phone-header', { opacity: 0, x: -20 });
-      tl.set('.phone-header .avatar', { opacity: 0, scale: 0 });
-      tl.set('.phone-title', { opacity: 0, y: 15 });
-      tl.set('.phone-card', { opacity: 0, y: 30 });
+      tl.set('#syncPanel', { opacity: 0 });
+      tl.set('.app-header', { opacity: 0, x: -20 });
+      tl.set('.app-header .avatar', { opacity: 0, scale: 0 });
+      tl.set('.app-title', { opacity: 0, y: 15 });
+      tl.set('#appCard-1', { opacity: 0, x: -50 });
+      tl.set('#appCard-2', { opacity: 0, x: 50 });
+      tl.set('#appCard-3', { opacity: 0, y: 40 });
       tl.set('.phone-cta', { opacity: 0, y: 20, scale: 0.9 });
       tl.set('#phoneNotif', { opacity: 0, x: 100 });
+
       tl.set('#scene-mobile .caption-eyebrow', { opacity: 0, y: 20 });
       tl.set(capMobile, { opacity: 0, y: 30, scale: 0.7 });
       tl.set('#scene-mobile .caption-sub', { opacity: 0, y: 20 });
 
       tl.to('#bg-solution', { opacity: 0, duration: 0.5, ease: 'power2.out' }, mobT);
-      punchIn(tl, 1.0, mobT, 3.0, 'power2.out');
+      punchIn(tl, 1.0, mobT, 7.5, 'power2.out');
 
+      /* Step 1: Glass app Canvas Reveal */
       tl.to('#phone', {
         opacity: 1, scale: 1, y: 0, rotation: 0,
         duration: 0.55, ease: 'back.out(1.4)'
       }, mobT + 0.2);
-      tl.to('.phone-screen', { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' }, mobT + 0.4);
 
-      tl.to('.phone-header', { opacity: 1, x: 0, duration: 0.3, ease: 'power2.out' }, mobT + 0.6);
-      tl.to('.phone-header .avatar', { opacity: 1, scale: 1, duration: 0.3, ease: 'back.out(2)' }, mobT + 0.7);
-      tl.to('.phone-title', { opacity: 1, y: 0, duration: 0.3, ease: 'power2.out' }, mobT + 0.8);
-      tl.to('.phone-card', {
-        opacity: 1, y: 0, duration: 0.35, stagger: 0.12, ease: 'back.out(1.3)'
-      }, mobT + 1.0);
-      tl.to('.phone-cta', { opacity: 1, y: 0, scale: 1, duration: 0.4, ease: 'back.out(1.8)' }, mobT + 1.4);
+      /* Trigger Secure Synchronization Interface */
+      tl.to('#syncPanel', { opacity: 1, duration: 0.3 }, mobT + 0.4);
+      tl.to('#syncPanel .sync-spinner', { rotation: 360, repeat: 2, ease: 'linear', duration: 0.5 }, mobT + 0.4);
+      tl.call(() => {
+        document.getElementById('syncStatus').textContent = '// CONNECTIVITY COMPILING...';
+      }, null, mobT + 0.9);
+      tl.call(() => {
+        document.getElementById('syncStatus').textContent = '✓ ARCHITECTURE ACTIVE';
+      }, null, mobT + 1.3);
+      tl.to('#syncPanel', { opacity: 0, duration: 0.3, ease: 'power2.in' }, mobT + 1.5);
 
-      /* Cursor Simulation: Mobile Screen Action Click */
-      tl.set('#cursor', { opacity: 1, x: 800, y: 1100 }, mobT + 1.6);
-      tl.to('#cursor', { x: 540, y: 1300, duration: 0.6, ease: 'power2.inOut' }, mobT + 1.7);
-      tl.to('.phone-cta', { scale: 0.9, duration: 0.1 }, mobT + 2.3);
-      tl.to('.phone-cta', { scale: 1.0, duration: 0.1 }, mobT + 2.4);
+      /* Step 2: Content Load */
+      tl.to('.app-header', { opacity: 1, x: 0, duration: 0.3, ease: 'power2.out' }, mobT + 1.6);
+      tl.to('.app-header .avatar', { opacity: 1, scale: 1, duration: 0.3, ease: 'back.out(2)' }, mobT + 1.75);
+      tl.to('.app-title', { opacity: 1, y: 0, duration: 0.3, ease: 'power2.out' }, mobT + 1.85);
 
-      /* Trigger Success Spark + Notification */
-      window.registerSpark(540, 1300, 20, mobT + 2.4);
-      tl.call(() => spawnSparkBurst(540, 1300, 20), null, mobT + 2.4);
-      tl.to('#phoneNotif', { opacity: 1, x: 0, duration: 0.4, ease: 'back.out(1.4)' }, mobT + 2.4);
-      tl.to('#cursor', { opacity: 0, duration: 0.2 }, mobT + 2.8);
+      /* Step 3: Feature Highlight Widget Slide-In */
+      tl.to('#appCard-1', { opacity: 1, x: 0, duration: 0.4, ease: 'back.out(1.3)' }, mobT + 2.0);
+      tl.call(() => {
+        buildCaption('capMobile', 'ENCRYPTED SECURITY', []);
+        document.getElementById('mobile-eyebrow').textContent = '// biometric sync';
+        document.getElementById('mobile-sub').textContent = 'Highly-integrated biometric systems with local hardware verification.';
+      }, null, mobT + 2.0);
 
-      tl.to('#scene-mobile .caption-eyebrow', { opacity: 1, y: 0, duration: 0.35 }, mobT + 0.2);
-      tl.to(capMobile, {
-        opacity: 1, y: 0, scale: 1,
-        duration: 0.4, stagger: 0.07, ease: 'back.out(1.5)'
-      }, mobT + 0.4);
-      tl.to('#scene-mobile .caption-sub', { opacity: 1, y: 0, duration: 0.4 }, mobT + 0.9);
+      tl.to('#appCard-2', { opacity: 1, x: 0, duration: 0.4, ease: 'back.out(1.3)' }, mobT + 3.3);
+      tl.call(() => {
+        buildCaption('capMobile', 'OFFLINE-FIRST CORE', []);
+        document.getElementById('mobile-eyebrow').textContent = '// zero latency system';
+        document.getElementById('mobile-sub').textContent = 'Synchronizes local operations smoothly, remaining fully functional without active connection.';
+      }, null, mobT + 3.3);
 
-      whip(tl, 14.0, '#scene-mobile', '#scene-desktop', 'right');
+      tl.to('#appCard-3', { opacity: 1, y: 0, duration: 0.4, ease: 'back.out(1.3)' }, mobT + 4.6);
+      tl.call(() => {
+        buildCaption('capMobile', 'BESPOKE HUB INTEGRATION', []);
+        document.getElementById('mobile-eyebrow').textContent = '// unified analytics';
+        document.getElementById('mobile-sub').textContent = 'Directly processes internal transaction data via fully custom, non-templated backends.';
+      }, null, mobT + 4.6);
 
-      /* Scene 5: Desktop Apps (14.45s) */
-      const dskT = 14.45;
-      updateHeaderTabs(tl, 'desktop', dskT);
+      tl.to('.phone-cta', { opacity: 1, y: 0, scale: 1, duration: 0.4, ease: 'back.out(1.8)' }, mobT + 5.5);
+
+      /* Step 4: Live Payment Receipt Simulation (6.1s - 7.5s) */
+      tl.to('#appCard-3', { className: 'app-card feature-glow', duration: 0.3 }, mobT + 6.1);
+      tl.to('#appCard-3 .line2', { background: '#ff6b1a', scaleX: 1.15, duration: 0.3 }, mobT + 6.1);
+
+      window.registerSpark(540, 1150, 20, mobT + 6.1);
+      tl.call(() => spawnSparkBurst(540, 1150, 20), null, mobT + 6.1);
+      tl.to('#phoneNotif', { opacity: 1, x: 0, duration: 0.4, ease: 'back.out(1.4)' }, mobT + 6.1);
+
+      whip(tl, 18.0, '#scene-mobile', '#scene-desktop', 'right');
+
+      /* Scene 5: Desktop Apps (18.0s - 21.5s) */
+      const dskT = 18.0;
 
       tl.set('#desktop', { opacity: 0, scale: 0.4, rotationY: 25 });
       tl.set('.desktop-titlebar .light', { opacity: 0, scale: 0 });
@@ -2267,11 +2046,10 @@
       }, dskT + 0.4);
       tl.to('#scene-desktop .caption-sub', { opacity: 1, y: 0, duration: 0.4 }, dskT + 0.9);
 
-      whip(tl, 17.5, '#scene-desktop', '#scene-web', 'right');
+      whip(tl, 21.5, '#scene-desktop', '#scene-web', 'right');
 
-      /* Scene 6: Websites (17.95s) */
-      const webT = 17.95;
-      updateHeaderTabs(tl, 'web', webT);
+      /* Scene 6: Websites (21.5s - 25.0s) */
+      const webT = 21.5;
 
       tl.set('#browser', { opacity: 0, scale: 0.4, y: 40 });
       tl.set('.browser-bar .b-light', { opacity: 0, scale: 0 });
@@ -2307,7 +2085,7 @@
         opacity: 1, rotationX: 0, duration: 0.4, stagger: 0.12, ease: 'back.out(1.4)'
       }, webT + 1.4);
 
-      /* Counter / Numerical Ticks Simulation */
+      /* Countup Ticks Animation */
       tl.to('#stat-val-1', {
         innerText: 12500,
         duration: 1.2,
@@ -2340,11 +2118,10 @@
       }, webT + 0.4);
       tl.to('#scene-web .caption-sub', { opacity: 1, y: 0, duration: 0.4 }, webT + 0.9);
 
-      whip(tl, 17.5 + 3.5, '#scene-web', '#scene-ai', 'right');
+      whip(tl, 25.0, '#scene-web', '#scene-ai', 'right');
 
-      /* Scene 7: AI Models (21.45s) */
-      const aiT = 21.45;
-      updateHeaderTabs(tl, 'ai', aiT);
+      /* Scene 7: AI Models (25.0s - 28.5s) */
+      const aiT = 25.0;
 
       tl.set('#aiStage', { opacity: 0, scale: 0.5 });
       tl.set(net.nodes.map(n => n.el), { opacity: 0, scale: 0 });
@@ -2418,14 +2195,10 @@
       }, aiT + 0.4);
       tl.to('#scene-ai .caption-sub', { opacity: 1, y: 0, duration: 0.4 }, aiT + 0.9);
 
-      /* Close active tab state and clear Telemetry widget */
-      tl.to('#app-navigation', { opacity: 0, y: -40, duration: 0.4 }, 24.5);
-      tl.to('#telemetry-widget', { opacity: 0, y: 40, duration: 0.4 }, 24.5);
+      whip(tl, 28.5, '#scene-ai', '#scene-cta', 'right');
 
-      whip(tl, 24.5, '#scene-ai', '#scene-cta', 'right');
-
-      /* Scene 8: CTA (24.95s – 30s) */
-      const ctaT = 24.95;
+      /* Scene 8: CTA (28.5s - 34.0s) */
+      const ctaT = 28.5;
 
       tl.set('#scene-cta .cta-eyebrow', { opacity: 0, y: 20 });
       tl.set('#scene-cta .word', { opacity: 0, y: 80, rotationX: -60 });
